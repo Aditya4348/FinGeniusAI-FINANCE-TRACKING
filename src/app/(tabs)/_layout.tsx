@@ -11,19 +11,25 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Overview',
+          title: 'Beranda',
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
-          title: 'Analytics',
+          title: 'Analitik',
         }}
       />
       <Tabs.Screen
         name="savings"
         options={{
-          title: 'Savings',
+          title: 'Tabungan',
+        }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: 'Dompet',
         }}
       />
     </Tabs>

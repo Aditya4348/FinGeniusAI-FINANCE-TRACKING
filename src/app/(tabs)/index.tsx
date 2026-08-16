@@ -1,164 +1,87 @@
-import { View, Text, StyleSheet, ScrollView, Image, Pressable } from 'react-native';
-import { GradientCard, CapitalCard, TransactionItem } from '@/components/FinanceUI';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { View, Text, ScrollView, Image, Pressable } from 'react-native';
+import { GradientCard, CapitalCard, TransactionItem, DailyBudgetCard } from '@/components/FinanceUI';
+import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 export default function OverviewScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView className="flex-1 bg-white" contentContainerClassName="p-6 pt-[60px]">
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.userInfo}>
-          <View style={styles.avatarContainer}>
+      <View className="flex-row justify-between items-center mb-8">
+        <View className="flex-row items-center">
+          <View className="w-11 h-11 rounded-full bg-[#F2F2F7] mr-3 overflow-hidden">
             <Image 
               source={{ uri: 'https://i.pravatar.cc/150?img=11' }} 
-              style={styles.avatar} 
+              className="w-full h-full" 
             />
           </View>
           <View>
-            <Text style={styles.welcomeText}>Welcome back,</Text>
-            <Text style={styles.nameText}>Caspar</Text>
+            <Text className="text-[13px] text-[#8E8E93] font-['Nunito_600SemiBold']">Selamat datang kembali,</Text>
+            <Text className="text-lg text-black font-['Nunito_700Bold']">Aditya</Text>
           </View>
         </View>
-        <Pressable style={styles.iconButton}>
+        <Pressable className="w-10 h-10 rounded-full bg-[#F2F2F7] justify-center items-center">
           <Feather name="lock" size={20} color="black" />
         </Pressable>
       </View>
 
       {/* Cards */}
-      <View style={styles.cardsSection}>
-        <GradientCard balance="€ 5 827.44" title="N26 balance" />
+      <View className="mb-6">
+        <DailyBudgetCard remaining="Rp 45.000" total="Rp 100.000" percentage={45} />
+        
+        <GradientCard balance="Rp 5.827.400" title="Saldo Utama" />
         
         {/* Pager Dots */}
-        <View style={styles.pagerDots}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
+        <View className="flex-row justify-center items-center mb-6">
+          <View className="w-1.5 h-1.5 rounded-full bg-black mx-1" />
+          <View className="w-1.5 h-1.5 rounded-full bg-[#E5E5EA] mx-1" />
+          <View className="w-1.5 h-1.5 rounded-full bg-[#E5E5EA] mx-1" />
+          <View className="w-1.5 h-1.5 rounded-full bg-[#E5E5EA] mx-1" />
         </View>
 
         <Pressable onPress={() => router.push('/capital')}>
-          <CapitalCard balance="€ 58 274.38" mom="6.3%" />
+          <CapitalCard balance="Rp 58.274.300" mom="6.3%" />
         </Pressable>
       </View>
 
       {/* Transactions */}
-      <View style={styles.transactionsSection}>
-        <Text style={styles.sectionTitle}>Recent transactions</Text>
+      <View className="mt-2">
+        <Text className="text-sm text-[#8E8E93] font-['Nunito_600SemiBold'] mb-4">Transaksi Terakhir</Text>
         
         <TransactionItem 
-          title="Interactive Brokers"
-          subtitle="Today at 1:30 pm"
-          badgeText="N26"
-          badgeColor="red"
-          amount="-€ 500"
+          title="Bibit Reksadana"
+          subtitle="Hari ini 13:30"
+          badgeText="BCA"
+          badgeColor="blue"
+          amount="-Rp 500.000"
         />
         <TransactionItem 
-          title="Apple"
-          subtitle="27 Jun at 10:30 am"
-          badgeText="N26"
-          badgeColor="red"
-          amount="-€ .99"
+          title="Netflix"
+          subtitle="27 Jun 10:30"
+          badgeText="Gopay"
+          badgeColor="purple"
+          amount="-Rp 186.000"
         />
         <TransactionItem 
-          title="Aaron Hoffmann"
-          subtitle="26 Jun at 8:30 pm"
-          badgeText="Commerce Bank"
-          badgeColor="green"
-          amount="-€ .99"
-        />
-        <TransactionItem 
-          title="Products"
-          subtitle="26 Jun at 6:30 pm"
-          badgeText="Cash"
+          title="Budi Santoso"
+          subtitle="26 Jun 20:30"
+          badgeText="Mandiri"
           badgeColor="yellow"
-          amount="-€ 7.99"
+          amount="+Rp 150.000"
+        />
+        <TransactionItem 
+          title="Indomaret"
+          subtitle="26 Jun 18:30"
+          badgeText="Tunai"
+          badgeColor="green"
+          amount="-Rp 75.000"
         />
       </View>
       
       {/* Bottom Padding for TabBar */}
-      <View style={{ height: 100 }} />
+      <View className="h-[100px]" />
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    padding: 24,
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F2F2F7',
-    marginRight: 12,
-    overflow: 'hidden',
-  },
-  avatar: {
-    width: '100%',
-    height: '100%',
-  },
-  welcomeText: {
-    fontSize: 13,
-    color: '#8E8E93',
-    fontFamily: 'Nunito_600SemiBold',
-  },
-  nameText: {
-    fontSize: 18,
-    color: '#000',
-    fontFamily: 'Nunito_700Bold',
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardsSection: {
-    marginBottom: 24,
-  },
-  pagerDots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#E5E5EA',
-    marginHorizontal: 4,
-  },
-  dotActive: {
-    backgroundColor: '#000',
-  },
-  transactionsSection: {
-    marginTop: 10,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-    fontFamily: 'Nunito_600SemiBold',
-    marginBottom: 16,
-  },
-});

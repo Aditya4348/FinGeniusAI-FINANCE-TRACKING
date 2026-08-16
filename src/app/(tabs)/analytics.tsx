@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { AntDesign, Feather } from '@expo/vector-icons';
+import { View, Text, ScrollView, Pressable } from 'react-native';
+import { AntDesign } from '@expo/vector-icons';
 import { PieChart } from 'react-native-gifted-charts';
 import { Badge } from '@/components/FinanceUI';
 
@@ -13,50 +13,52 @@ export default function AnalyticsScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView className="flex-1 bg-white" contentContainerClassName="p-6 pt-[60px]">
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Analytics</Text>
-        <Pressable style={styles.iconButton}>
+      <View className="flex-row justify-between items-center mb-8">
+        <Text className="text-2xl font-['Nunito_800ExtraBold'] text-black">Analitik</Text>
+        <Pressable className="w-10 h-10 rounded-full bg-[#F2F2F7] justify-center items-center">
           <AntDesign name="setting" size={24} color="black" />
         </Pressable>
       </View>
 
       {/* Segmented Control */}
-      <View style={styles.segmentedControl}>
-        <Pressable style={[styles.segment, styles.segmentActive]}>
-          <Text style={[styles.segmentText, styles.segmentTextActive]}>This month</Text>
+      <View className="flex-row bg-[#F2F2F7] rounded-[20px] p-1 mb-10">
+        <Pressable className="flex-1 py-2.5 items-center rounded-2xl bg-white shadow-sm elevation-sm">
+          <Text className="text-[13px] font-['Nunito_700Bold'] text-black">Bulan ini</Text>
         </Pressable>
-        <Pressable style={styles.segment}>
-          <Text style={styles.segmentText}>Last month</Text>
+        <Pressable className="flex-1 py-2.5 items-center rounded-2xl">
+          <Text className="text-[13px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Bulan lalu</Text>
         </Pressable>
-        <Pressable style={styles.segment}>
-          <Text style={styles.segmentText}>Custom</Text>
+        <Pressable className="flex-1 py-2.5 items-center rounded-2xl">
+          <Text className="text-[13px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Kustom</Text>
         </Pressable>
       </View>
 
       {/* Net Income */}
-      <View style={styles.netIncomeSection}>
-        <Text style={styles.sectionTitle}>Net income</Text>
-        <View style={styles.balanceRow}>
-          <Text style={styles.currency}>€</Text>
-          <Text style={styles.balanceInt}> 3 152</Text>
-          <Text style={styles.balanceDec}>.37</Text>
-          <Pressable style={styles.addBtn}>
+      <View className="mb-10">
+        <Text className="text-sm text-[#8E8E93] font-['Nunito_600SemiBold'] mb-4">Pendapatan Bersih</Text>
+        <View className="flex-row items-baseline mb-3">
+          <Text className="text-[32px] font-['Nunito_800ExtraBold'] text-black">Rp </Text>
+          <Text className="text-[48px] font-['Nunito_800ExtraBold'] text-black tracking-tighter">3.152</Text>
+          <Text className="text-[32px] font-['Nunito_800ExtraBold'] text-[#8E8E93]">.300</Text>
+          <Pressable className="w-7 h-7 rounded-full bg-black justify-center items-center ml-3 self-center">
             <AntDesign name="plus" size={16} color="white" />
           </Pressable>
         </View>
-        <View style={styles.momContainer}>
+        <View className="flex-row items-center">
           <Badge text="6.3%" color="#ECFDF3" textColor="#027A48" />
-          <Text style={styles.momText}>Month-over-Month <AntDesign name="down" size={10} color="#8E8E93" /></Text>
+          <Text className="ml-2 text-[13px] font-['Nunito_600SemiBold'] text-[#8E8E93]">
+            Bulan ke Bulan <AntDesign name="down" size={10} color="#8E8E93" />
+          </Text>
         </View>
       </View>
 
       {/* Expenses */}
-      <View style={styles.expensesSection}>
-        <Text style={styles.sectionTitle}>Expenses</Text>
+      <View className="bg-white">
+        <Text className="text-sm text-[#8E8E93] font-['Nunito_600SemiBold'] mb-4">Pengeluaran</Text>
         
-        <View style={styles.chartContainer}>
+        <View className="items-center mb-8">
           <PieChart
             data={pieData}
             donut
@@ -65,9 +67,9 @@ export default function AnalyticsScreen() {
             innerCircleColor={'#fff'}
             centerLabelComponent={() => {
               return (
-                <View style={styles.chartCenter}>
-                  <Text style={styles.chartCenterAmount}>€ 5 097.21</Text>
-                  <Text style={styles.chartCenterLabel}>Total spent</Text>
+                <View className="items-center justify-center">
+                  <Text className="text-xl font-['Nunito_800ExtraBold'] text-black">Rp 5.097.200</Text>
+                  <Text className="text-xs font-['Nunito_600SemiBold'] text-[#8E8E93]">Total keluar</Text>
                 </View>
               );
             }}
@@ -75,200 +77,29 @@ export default function AnalyticsScreen() {
         </View>
 
         {/* Legend */}
-        <View style={styles.legendList}>
-          <LegendItem color="#FF4B4B" name="Mandatory" percentage="35%" amount="€ 1 784.02" />
-          <LegendItem color="#FF7F50" name="Food" percentage="24%" amount="€ 1 223.33" />
+        <View className="gap-4">
+          <LegendItem color="#FF4B4B" name="Kebutuhan Pokok" percentage="35%" amount="Rp 1.784.000" />
+          <LegendItem color="#FF7F50" name="Makan & Minum" percentage="24%" amount="Rp 1.223.300" />
         </View>
       </View>
       
       {/* Bottom Padding for TabBar */}
-      <View style={{ height: 100 }} />
+      <View className="h-[100px]" />
     </ScrollView>
   );
 }
 
 function LegendItem({ color, name, percentage, amount }: { color: string, name: string, percentage: string, amount: string }) {
   return (
-    <View style={styles.legendItem}>
-      <View style={styles.legendLeft}>
-        <View style={[styles.legendDot, { backgroundColor: color }]} />
-        <Text style={styles.legendName}>{name}</Text>
-        <View style={styles.legendBadge}>
-          <Text style={styles.legendBadgeText}>{percentage}</Text>
+    <View className="flex-row justify-between items-center">
+      <View className="flex-row items-center">
+        <View className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: color }} />
+        <Text className="text-sm font-['Nunito_700Bold'] text-black mr-2">{name}</Text>
+        <View className="bg-[#F2F2F7] px-1.5 py-0.5 rounded-md">
+          <Text className="text-[10px] font-['Nunito_700Bold'] text-[#8E8E93]">{percentage}</Text>
         </View>
       </View>
-      <Text style={styles.legendAmount}>{amount}</Text>
+      <Text className="text-sm font-['Nunito_700Bold'] text-black">{amount}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  content: {
-    padding: 24,
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontFamily: 'Nunito_800ExtraBold',
-    color: '#000',
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 20,
-    padding: 4,
-    marginBottom: 40,
-  },
-  segment: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 16,
-  },
-  segmentActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  segmentText: {
-    fontSize: 13,
-    fontFamily: 'Nunito_600SemiBold',
-    color: '#8E8E93',
-  },
-  segmentTextActive: {
-    color: '#000',
-    fontFamily: 'Nunito_700Bold',
-  },
-  netIncomeSection: {
-    marginBottom: 40,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-    fontFamily: 'Nunito_600SemiBold',
-    marginBottom: 16,
-  },
-  balanceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 12,
-  },
-  currency: {
-    fontSize: 40,
-    fontFamily: 'Nunito_800ExtraBold',
-    color: '#000',
-  },
-  balanceInt: {
-    fontSize: 48,
-    fontFamily: 'Nunito_800ExtraBold',
-    color: '#000',
-    letterSpacing: -1,
-  },
-  balanceDec: {
-    fontSize: 40,
-    fontFamily: 'Nunito_800ExtraBold',
-    color: '#8E8E93',
-  },
-  addBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-    alignSelf: 'center',
-  },
-  momContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  momText: {
-    marginLeft: 8,
-    fontSize: 13,
-    fontFamily: 'Nunito_600SemiBold',
-    color: '#8E8E93',
-  },
-  expensesSection: {
-    backgroundColor: '#fff',
-  },
-  chartContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  chartCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chartCenterAmount: {
-    fontSize: 20,
-    fontFamily: 'Nunito_800ExtraBold',
-    color: '#000',
-  },
-  chartCenterLabel: {
-    fontSize: 12,
-    fontFamily: 'Nunito_600SemiBold',
-    color: '#8E8E93',
-  },
-  legendList: {
-    gap: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  legendLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  legendName: {
-    fontSize: 14,
-    fontFamily: 'Nunito_700Bold',
-    color: '#000',
-    marginRight: 8,
-  },
-  legendBadge: {
-    backgroundColor: '#F2F2F7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  legendBadgeText: {
-    fontSize: 10,
-    fontFamily: 'Nunito_700Bold',
-    color: '#8E8E93',
-  },
-  legendAmount: {
-    fontSize: 14,
-    fontFamily: 'Nunito_700Bold',
-    color: '#000',
-  },
-});

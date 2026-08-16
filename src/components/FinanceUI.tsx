@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AntDesign } from '@expo/vector-icons';
 
@@ -14,8 +14,8 @@ export interface TransactionItemProps {
 
 export function Badge({ text, color = '#F2F2F7', textColor = '#000' }: { text: string, color?: string, textColor?: string }) {
   return (
-    <View style={[styles.badge, { backgroundColor: color }]}>
-      <Text style={[styles.badgeText, { color: textColor }]}>{text}</Text>
+    <View className="px-1.5 py-0.5 rounded-md ml-1.5 border border-black/5" style={{ backgroundColor: color }}>
+      <Text className="text-[10px] font-['Nunito_700Bold']" style={{ color: textColor }}>{text}</Text>
     </View>
   );
 }
@@ -26,17 +26,17 @@ export function GradientCard({ balance, title }: { balance: string, title?: stri
       colors={['#FF4B4B', '#FF7F50']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={styles.gradientCard}
+      className="rounded-3xl overflow-hidden p-6 h-[180px] justify-between mb-5"
     >
-      <View style={styles.cardHeader}>
-        <Text style={styles.cardTitle}>{title || 'N26 balance'}</Text>
+      <View className="flex-row justify-between items-center">
+        <Text className="text-white/80 text-sm font-['Nunito_600SemiBold']">{title || 'Saldo Utama'}</Text>
         <AntDesign name="ellipsis1" size={24} color="white" />
       </View>
-      <View style={styles.cardBody}>
-        <Text style={styles.cardBalance}>{balance}</Text>
-        <Pressable style={styles.addMoneyBtn}>
+      <View className="flex-row justify-between items-end">
+        <Text className="text-white text-3xl font-['Nunito_800ExtraBold']">{balance}</Text>
+        <Pressable className="bg-white/25 px-4 py-2.5 rounded-full flex-row items-center">
           <AntDesign name="plus" size={14} color="white" />
-          <Text style={styles.addMoneyText}>Add money</Text>
+          <Text className="text-white text-sm font-['Nunito_600SemiBold'] ml-1.5">Isi Saldo</Text>
         </Pressable>
       </View>
     </LinearGradient>
@@ -45,24 +45,53 @@ export function GradientCard({ balance, title }: { balance: string, title?: stri
 
 export function CapitalCard({ balance, mom }: { balance: string, mom: string }) {
   return (
-    <View style={styles.capitalCard}>
-      <View style={styles.capitalIcon}>
-        <View style={styles.capitalInnerIcon}></View>
+    <View className="bg-[#1C1C1E] rounded-[20px] p-4 flex-row items-center mb-8">
+      <View className="w-10 h-10 rounded-full bg-white/10 justify-center items-center mr-4">
+        <View className="w-5 h-5 rounded-full bg-white" />
       </View>
-      <View style={styles.capitalInfo}>
-        <Text style={styles.capitalTitle}>Total capital</Text>
-        <Text style={styles.capitalBalance}>{balance}</Text>
+      <View className="flex-1">
+        <Text className="text-white/60 text-[13px] font-['Nunito_600SemiBold']">Total Aset</Text>
+        <Text className="text-white text-lg font-['Nunito_700Bold']">{balance}</Text>
       </View>
-      <View style={styles.momBadge}>
-        <Text style={styles.momTitle}>MoM</Text>
-        <Text style={styles.momValue}>{mom}</Text>
+      <View className="items-end">
+        <Text className="text-white/60 text-[13px] font-['Nunito_600SemiBold']">Pertumbuhan</Text>
+        <Text className="text-[#34C759] text-[15px] font-['Nunito_700Bold']">{mom}</Text>
+      </View>
+    </View>
+  );
+}
+
+export function DailyBudgetCard({ remaining, total, percentage }: { remaining: string, total: string, percentage: number }) {
+  return (
+    <View className="bg-white rounded-3xl p-6 border border-[#E5E5EA] shadow-sm elevation-sm mb-5">
+      <View className="flex-row justify-between items-start mb-6">
+        <View>
+          <Text className="text-[#8E8E93] text-sm font-['Nunito_600SemiBold'] mb-1">Sisa Jatah Harian</Text>
+          <Text className="text-black text-3xl font-['Nunito_800ExtraBold'] tracking-tighter">{remaining}</Text>
+        </View>
+        <View className="w-10 h-10 rounded-full bg-[#ECFDF3] justify-center items-center">
+          <AntDesign name="checkcircle" size={20} color="#027A48" />
+        </View>
+      </View>
+
+      <View className="mb-2">
+        <View className="h-2 w-full bg-[#F2F2F7] rounded-full overflow-hidden">
+          <View 
+            className="h-full bg-[#027A48] rounded-full" 
+            style={{ width: `${percentage}%` }}
+          />
+        </View>
+      </View>
+      
+      <View className="flex-row justify-between items-center">
+        <Text className="text-[#8E8E93] text-xs font-['Nunito_600SemiBold']">{percentage}% aman</Text>
+        <Text className="text-[#8E8E93] text-xs font-['Nunito_600SemiBold']">dari {total}</Text>
       </View>
     </View>
   );
 }
 
 export function TransactionItem({ title, subtitle, badgeText, badgeColor, amount }: TransactionItemProps) {
-  // Parsing badge color logic for demonstration
   let bColor = '#FDEBEB'; // light red
   let tColor = '#D92D20'; // red
   if (badgeColor === 'green') {
@@ -80,167 +109,18 @@ export function TransactionItem({ title, subtitle, badgeText, badgeColor, amount
   }
 
   return (
-    <View style={styles.transactionItem}>
-      <View style={styles.txIconPlaceholder}>
-        <Text style={styles.txIconText}>{title.substring(0, 1)}</Text>
+    <View className="flex-row items-center py-4 border-b border-[#E5E5EA]">
+      <View className="w-10 h-10 rounded-full bg-[#F2F2F7] justify-center items-center mr-4">
+        <Text className="text-lg font-['Nunito_700Bold'] text-[#8E8E93]">{title.substring(0, 1)}</Text>
       </View>
-      <View style={styles.txDetails}>
-        <View style={styles.txTitleRow}>
-          <Text style={styles.txTitle}>{title}</Text>
+      <View className="flex-1">
+        <View className="flex-row items-center mb-1">
+          <Text className="text-base font-['Nunito_700Bold'] text-black">{title}</Text>
           {badgeText && <Badge text={badgeText} color={bColor} textColor={tColor} />}
         </View>
-        <Text style={styles.txSubtitle}>{subtitle}</Text>
+        <Text className="text-[13px] font-['Nunito_600SemiBold'] text-[#8E8E93]">{subtitle}</Text>
       </View>
-      <Text style={styles.txAmount}>{amount}</Text>
+      <Text className="text-base font-['Nunito_700Bold'] text-black">{amount}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginLeft: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  badgeText: {
-    fontSize: 10,
-    fontFamily: 'Nunito_700Bold',
-  },
-  gradientCard: {
-    borderRadius: 24,
-    padding: 24,
-    height: 180,
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardTitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
-    fontFamily: 'Nunito_600SemiBold',
-  },
-  cardBody: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  cardBalance: {
-    color: 'white',
-    fontSize: 32,
-    fontFamily: 'Nunito_800ExtraBold',
-  },
-  addMoneyBtn: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  addMoneyText: {
-    color: 'white',
-    fontSize: 14,
-    fontFamily: 'Nunito_600SemiBold',
-    marginLeft: 6,
-  },
-  capitalCard: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 20,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  capitalIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  capitalInnerIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: 'white',
-  },
-  capitalInfo: {
-    flex: 1,
-  },
-  capitalTitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    fontFamily: 'Nunito_600SemiBold',
-  },
-  capitalBalance: {
-    color: 'white',
-    fontSize: 18,
-    fontFamily: 'Nunito_700Bold',
-  },
-  momBadge: {
-    alignItems: 'flex-end',
-  },
-  momTitle: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    fontFamily: 'Nunito_600SemiBold',
-  },
-  momValue: {
-    color: '#34C759',
-    fontSize: 15,
-    fontFamily: 'Nunito_700Bold',
-  },
-  transactionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E5E5EA',
-  },
-  txIconPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  txIconText: {
-    fontSize: 18,
-    fontFamily: 'Nunito_700Bold',
-    color: '#8E8E93',
-  },
-  txDetails: {
-    flex: 1,
-  },
-  txTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  txTitle: {
-    fontSize: 16,
-    fontFamily: 'Nunito_700Bold',
-    color: '#000',
-  },
-  txSubtitle: {
-    fontSize: 13,
-    fontFamily: 'Nunito_600SemiBold',
-    color: '#8E8E93',
-  },
-  txAmount: {
-    fontSize: 16,
-    fontFamily: 'Nunito_700Bold',
-    color: '#000',
-  }
-});
