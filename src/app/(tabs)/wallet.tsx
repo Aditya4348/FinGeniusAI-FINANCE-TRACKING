@@ -7,7 +7,7 @@ export default function CapitalScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerClassName="p-6 pt-[60px]">
+    <ScrollView className="flex-1 bg-[#F9FAFB]" contentContainerClassName="p-6 pt-[60px]">
       {/* Header */}
       <View className="flex-row justify-between items-center mb-10">
         <Pressable onPress={() => router.back()} className="w-10 h-10 rounded-full justify-center items-center">

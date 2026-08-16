@@ -23,10 +23,11 @@ export function Badge({ text, color = '#F2F2F7', textColor = '#000' }: { text: s
 export function GradientCard({ balance, title }: { balance: string, title?: string }) {
   return (
     <LinearGradient
-      colors={['#FF4B4B', '#FF7F50']}
+      colors={['#0369A1', '#0284C7']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="rounded-3xl overflow-hidden p-6 h-[180px] justify-between mb-5"
+      style={{ borderRadius: 24, overflow: 'hidden' }}
+      className="p-6 h-[180px] justify-between mb-5"
     >
       <View className="flex-row justify-between items-center">
         <Text className="text-white/80 text-sm font-['Nunito_600SemiBold']">{title || 'Saldo Utama'}</Text>
@@ -45,7 +46,7 @@ export function GradientCard({ balance, title }: { balance: string, title?: stri
 
 export function CapitalCard({ balance, mom }: { balance: string, mom: string }) {
   return (
-    <View className="bg-[#1C1C1E] rounded-[20px] p-4 flex-row items-center mb-8">
+    <View className="bg-[#0F172A] rounded-[20px] p-4 flex-row items-center mb-8">
       <View className="w-10 h-10 rounded-full bg-white/10 justify-center items-center mr-4">
         <View className="w-5 h-5 rounded-full bg-white" />
       </View>

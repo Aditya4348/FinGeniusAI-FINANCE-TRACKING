@@ -13,7 +13,7 @@ export default function AnalyticsScreen() {
   ];
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerClassName="p-6 pt-[60px]">
+    <ScrollView className="flex-1 bg-[#F9FAFB]" contentContainerClassName="p-6 pt-[60px]">
       {/* Header */}
       <View className="flex-row justify-between items-center mb-8">
         <Text className="text-2xl font-['Nunito_800ExtraBold'] text-black">Analitik</Text>
@@ -55,7 +55,7 @@ export default function AnalyticsScreen() {
       </View>
 
       {/* Expenses */}
-      <View className="bg-white">
+      <View className="bg-transparent">
         <Text className="text-sm text-[#8E8E93] font-['Nunito_600SemiBold'] mb-4">Pengeluaran</Text>
         
         <View className="items-center mb-8">
@@ -64,7 +64,7 @@ export default function AnalyticsScreen() {
             donut
             innerRadius={80}
             radius={110}
-            innerCircleColor={'#fff'}
+            innerCircleColor={'#F9FAFB'}
             centerLabelComponent={() => {
               return (
                 <View className="items-center justify-center">

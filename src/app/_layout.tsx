@@ -36,9 +36,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AnimatedSplashOverlay />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="ai-input" options={{ presentation: 'transparentModal', animation: 'fade', headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="ai-input" options={{ presentation: 'transparentModal', animation: 'fade' }} />
       </Stack>
     </ThemeProvider>
   );

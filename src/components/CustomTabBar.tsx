@@ -64,13 +64,13 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         className="flex-1 items-center justify-center pt-2 pb-1"
       >
         {IconComponent === FontAwesome5 ? (
-          <FontAwesome5 name={iconName} size={22} color={isFocused ? '#000' : '#8E8E93'} />
+          <FontAwesome5 name={iconName} size={22} color={isFocused ? '#0284C7' : '#8E8E93'} />
         ) : (
-          <IconComponent name={iconName} size={24} color={isFocused ? '#000' : '#8E8E93'} />
+          <IconComponent name={iconName} size={24} color={isFocused ? '#0284C7' : '#8E8E93'} />
         )}
         
         <Text 
-          className={`text-[10px] mt-1 ${isFocused ? "text-black font-['Nunito_700Bold']" : "text-[#8E8E93] font-['Nunito_600SemiBold']"}`}
+          className={`text-[10px] mt-1 ${isFocused ? "text-[#0284C7] font-['Nunito_700Bold']" : "text-[#8E8E93] font-['Nunito_600SemiBold']"}`}
         >
           {label as string}
         </Text>
@@ -91,7 +91,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         {/* Action Button (Add) in the center */}
         <Pressable 
           onPress={() => navigation.navigate('ai-input')}
-          className="bg-black w-14 h-14 rounded-full flex-col items-center justify-center -mt-6 shadow-md shadow-black/20 mx-1"
+          className="bg-[#8B5CF6] w-14 h-14 rounded-full flex-col items-center justify-center -mt-6 shadow-md shadow-[#8B5CF6]/30 mx-1"
         >
           <AntDesign name="plus" size={24} color="#fff" />
         </Pressable>

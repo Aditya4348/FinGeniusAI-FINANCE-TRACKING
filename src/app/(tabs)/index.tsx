@@ -2,15 +2,20 @@ import { View, Text, ScrollView, Image, Pressable } from 'react-native';
 import { GradientCard, CapitalCard, TransactionItem, DailyBudgetCard } from '@/components/FinanceUI';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 
 export default function OverviewScreen() {
   const router = useRouter();
+  const [isCensored, setIsCensored] = useState(false);
+
+  const censor = (val: string) => isCensored ? 'Rp ***.***' : val;
+  const censorTx = (val: string) => isCensored ? (val.startsWith('-') ? '-Rp ***' : '+Rp ***') : val;
 
   return (
-    <ScrollView className="flex-1 bg-white" contentContainerClassName="p-6 pt-[60px]">
+    <ScrollView className="flex-1 bg-[#F9FAFB]" contentContainerClassName="p-6 pt-[60px]">
       {/* Header */}
       <View className="flex-row justify-between items-center mb-8">
-        <View className="flex-row items-center">
+        <Pressable onPress={() => router.push('/profile')} className="flex-row items-center">
           <View className="w-11 h-11 rounded-full bg-[#F2F2F7] mr-3 overflow-hidden">
             <Image 
               source={{ uri: 'https://i.pravatar.cc/150?img=11' }} 
@@ -21,28 +26,23 @@ export default function OverviewScreen() {
             <Text className="text-[13px] text-[#8E8E93] font-['Nunito_600SemiBold']">Selamat datang kembali,</Text>
             <Text className="text-lg text-black font-['Nunito_700Bold']">Aditya</Text>
           </View>
-        </View>
-        <Pressable className="w-10 h-10 rounded-full bg-[#F2F2F7] justify-center items-center">
-          <Feather name="lock" size={20} color="black" />
+        </Pressable>
+        <Pressable 
+          onPress={() => setIsCensored(!isCensored)} 
+          className="w-10 h-10 rounded-full bg-[#F2F2F7] justify-center items-center"
+        >
+          <Feather name={isCensored ? "eye-off" : "eye"} size={20} color="black" />
         </Pressable>
       </View>
 
       {/* Cards */}
       <View className="mb-6">
-        <DailyBudgetCard remaining="Rp 45.000" total="Rp 100.000" percentage={45} />
+        <DailyBudgetCard remaining={censor("Rp 45.000")} total={censor("Rp 100.000")} percentage={45} />
         
-        <GradientCard balance="Rp 5.827.400" title="Saldo Utama" />
-        
-        {/* Pager Dots */}
-        <View className="flex-row justify-center items-center mb-6">
-          <View className="w-1.5 h-1.5 rounded-full bg-black mx-1" />
-          <View className="w-1.5 h-1.5 rounded-full bg-[#E5E5EA] mx-1" />
-          <View className="w-1.5 h-1.5 rounded-full bg-[#E5E5EA] mx-1" />
-          <View className="w-1.5 h-1.5 rounded-full bg-[#E5E5EA] mx-1" />
-        </View>
+        <GradientCard balance={censor("Rp 5.827.400")} title="Saldo Utama" />
 
         <Pressable onPress={() => router.push('/capital')}>
-          <CapitalCard balance="Rp 58.274.300" mom="6.3%" />
+          <CapitalCard balance={censor("Rp 58.274.300")} mom="6.3%" />
         </Pressable>
       </View>
 
@@ -55,28 +55,28 @@ export default function OverviewScreen() {
           subtitle="Hari ini 13:30"
           badgeText="BCA"
           badgeColor="blue"
-          amount="-Rp 500.000"
+          amount={censorTx("-Rp 500.000")}
         />
         <TransactionItem 
           title="Netflix"
           subtitle="27 Jun 10:30"
           badgeText="Gopay"
           badgeColor="purple"
-          amount="-Rp 186.000"
+          amount={censorTx("-Rp 186.000")}
         />
         <TransactionItem 
           title="Budi Santoso"
           subtitle="26 Jun 20:30"
           badgeText="Mandiri"
           badgeColor="yellow"
-          amount="+Rp 150.000"
+          amount={censorTx("+Rp 150.000")}
         />
         <TransactionItem 
           title="Indomaret"
           subtitle="26 Jun 18:30"
           badgeText="Tunai"
           badgeColor="green"
-          amount="-Rp 75.000"
+          amount={censorTx("-Rp 75.000")}
         />
       </View>
       

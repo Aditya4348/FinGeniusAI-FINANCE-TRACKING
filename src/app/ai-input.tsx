@@ -88,8 +88,8 @@ export default function AiInputScreen() {
               {/* Header */}
               <View className="flex-row justify-between items-center mb-6">
                 <View className="flex-row items-center">
-                  <View className="w-10 h-10 rounded-full bg-[#F4F3FF] items-center justify-center mr-3">
-                    <FontAwesome name="magic" size={20} color="#5925DC" />
+                  <View className="w-10 h-10 rounded-full bg-[#F5F3FF] items-center justify-center mr-3">
+                    <FontAwesome name="magic" size={20} color="#8B5CF6" />
                   </View>
                   <Text className="text-lg font-['Nunito_800ExtraBold'] text-black">FinGenius AI</Text>
                 </View>
@@ -154,13 +154,13 @@ export default function AiInputScreen() {
                 {inputText.trim() ? (
                   <Pressable 
                     onPress={handleSend}
-                    className="w-[50px] h-[50px] rounded-full bg-black justify-center items-center"
+                    className="w-[50px] h-[50px] rounded-full bg-[#8B5CF6] justify-center items-center shadow-sm shadow-[#8B5CF6]/30"
                   >
                     <Ionicons name="send" size={20} color="white" style={{ marginLeft: 3 }} />
                   </Pressable>
                 ) : (
-                  <Pressable className="w-[50px] h-[50px] rounded-full bg-[#F4F3FF] justify-center items-center">
-                    <Ionicons name="mic" size={24} color="#5925DC" />
+                  <Pressable className="w-[50px] h-[50px] rounded-full bg-[#F5F3FF] justify-center items-center">
+                    <Ionicons name="mic" size={24} color="#8B5CF6" />
                   </Pressable>
                 )}
               </View>
