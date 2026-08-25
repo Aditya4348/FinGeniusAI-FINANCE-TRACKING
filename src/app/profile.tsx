@@ -1,7 +1,6 @@
 import { View, Text, ScrollView, Image, Pressable } from 'react-native';
 import { Feather, Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -30,7 +29,7 @@ export default function ProfileScreen() {
             <Feather name="arrow-left" size={24} color="white" />
           </Pressable>
           <Text className="text-white text-lg font-['Nunito_800ExtraBold']">Profil</Text>
-          <View className="w-10 h-10" />
+          <View className="w-10 h-10" /> {/* Spacer for centering */}
         </View>
 
         {/* Profile Info */}
@@ -54,7 +53,7 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 mt-[180px]" showsVerticalScrollIndicator={false} contentContainerClassName="px-5 pb-10">
+      <ScrollView className="flex-1 mt-[180px]" showsVerticalScrollIndicator={false} contentContainerClassName="px-5 pb-[120px]">
         
         {/* Floating Middle Card */}
         <View className="bg-white rounded-3xl p-5 shadow-sm elevation-sm mb-6 border border-[#F2F2F7]">

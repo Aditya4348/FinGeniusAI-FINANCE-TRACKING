@@ -15,21 +15,27 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="history"
+        options={{
+          title: 'Riwayat',
+        }}
+      />
+      <Tabs.Screen
         name="analytics"
         options={{
           title: 'Analitik',
         }}
       />
       <Tabs.Screen
-        name="savings"
-        options={{
-          title: 'Tabungan',
-        }}
-      />
-      <Tabs.Screen
         name="wallet"
         options={{
           title: 'Dompet',
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Saya',
         }}
       />
     </Tabs>

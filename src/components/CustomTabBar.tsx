@@ -1,6 +1,6 @@
 import { View, Pressable, Text } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { AntDesign, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { AntDesign, Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -42,11 +42,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     if (route.name === 'index') {
       iconName = isFocused ? 'home' : 'home-outline';
       IconComponent = Ionicons;
+    } else if (route.name === 'history') {
+      iconName = isFocused ? 'receipt' : 'receipt-outline';
+      IconComponent = Ionicons;
     } else if (route.name === 'analytics') {
-      iconName = 'chart-line';
-      IconComponent = FontAwesome5;
-    } else if (route.name === 'savings') {
-      iconName = isFocused ? 'wallet' : 'wallet-outline';
+      iconName = isFocused ? 'pie-chart' : 'pie-chart-outline';
       IconComponent = Ionicons;
     } else if (route.name === 'wallet') {
       iconName = isFocused ? 'card' : 'card-outline';
