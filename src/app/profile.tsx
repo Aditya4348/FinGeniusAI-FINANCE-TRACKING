@@ -74,7 +74,9 @@ export default function ProfileScreen() {
               <Text className="text-[11px] font-['Nunito_700Bold'] text-black text-center leading-tight">Sumber Dana</Text>
             </Pressable>
 
-            <Pressable className="items-center w-[22%]">
+            <Pressable 
+            onPress={() => router.push('/ProfilePage/LimitDay')}
+            className="items-center w-[22%]">
               <View className="w-12 h-12 rounded-2xl bg-[#FFF4ED] items-center justify-center mb-2">
                 <MaterialIcons name="track-changes" size={24} color="#EA580C" />
               </View>
