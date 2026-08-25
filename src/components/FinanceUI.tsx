@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AntDesign } from '@expo/vector-icons';
+import { AntDesign, Feather } from '@expo/vector-icons';
 
 // Types
 export interface TransactionItemProps {
@@ -20,24 +20,31 @@ export function Badge({ text, color = '#F2F2F7', textColor = '#000' }: { text: s
   );
 }
 
-export function GradientCard({ balance, title }: { balance: string, title?: string }) {
+export function GradientCard({ balance, title, onTopUpPress }: { balance: string, title: string, onTopUpPress?: () => void }) {
   return (
     <LinearGradient
       colors={['#0369A1', '#0284C7']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={{ borderRadius: 24, overflow: 'hidden' }}
-      className="p-6 h-[180px] justify-between mb-5"
+      className="rounded-[24px] p-6 mb-4 relative overflow-hidden"
     >
-      <View className="flex-row justify-between items-center">
-        <Text className="text-white/80 text-sm font-['Nunito_600SemiBold']">{title || 'Saldo Utama'}</Text>
-        <AntDesign name="ellipsis1" size={24} color="white" />
-      </View>
-      <View className="flex-row justify-between items-end">
-        <Text className="text-white text-3xl font-['Nunito_800ExtraBold']">{balance}</Text>
-        <Pressable className="bg-white/25 px-4 py-2.5 rounded-full flex-row items-center">
-          <AntDesign name="plus" size={14} color="white" />
+      <View className="absolute right-0 top-0 w-32 h-32 rounded-full bg-white/10 -mr-10 -mt-10" />
+      <View className="absolute left-0 bottom-0 w-24 h-24 rounded-full bg-white/10 -ml-10 -mb-10" />
+
+      <Text className="text-white/80 text-sm font-['Nunito_600SemiBold'] mb-1">{title}</Text>
+      <Text className="text-white text-[32px] font-['Nunito_800ExtraBold'] mb-6 tracking-tight">{balance}</Text>
+
+      <View className="flex-row items-center gap-3">
+        <Pressable 
+          onPress={onTopUpPress}
+          className="flex-row items-center bg-white/20 px-4 py-2.5 rounded-full"
+        >
+          <Feather name="plus" size={16} color="white" />
           <Text className="text-white text-sm font-['Nunito_600SemiBold'] ml-1.5">Isi Saldo</Text>
+        </Pressable>
+        <Pressable className="flex-row items-center bg-white/20 px-4 py-2.5 rounded-full">
+          <Feather name="arrow-up-right" size={16} color="white" />
+          <Text className="text-white text-sm font-['Nunito_600SemiBold'] ml-1.5">Transfer</Text>
         </Pressable>
       </View>
     </LinearGradient>

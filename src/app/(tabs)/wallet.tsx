@@ -1,105 +1,284 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
-import { AntDesign, Feather } from '@expo/vector-icons';
-import { TransactionItem, Badge } from '@/components/FinanceUI';
+import { View, Text, ScrollView, Pressable, Modal, TextInput, Alert, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
+import { useRupiahInput } from '@/hooks/useRupiahInput';
 
-export default function CapitalScreen() {
-  const router = useRouter();
+const INITIAL_WALLETS = [
+  { id: '1', name: 'BCA Utama', type: 'Bank', balance: 'Rp 14.568.600', number: '**** 8821', icon: 'bank', color1: '#005AAA', color2: '#003B73' },
+  { id: '2', name: 'Bank Jago', type: 'Bank', balance: 'Rp 8.420.000', number: '**** 4022', icon: 'bank', color1: '#F97316', color2: '#C2410C' },
+  { id: '3', name: 'GoPay', type: 'E-Wallet', balance: 'Rp 1.250.500', number: '+62 812 ****', icon: 'wallet', color1: '#00AED6', color2: '#007C99' },
+  { id: '4', name: 'Tunai', type: 'Cash', balance: 'Rp 850.000', number: 'Dompet Fisik', icon: 'cash', color1: '#10B981', color2: '#047857' },
+];
+
+export default function WalletScreen() {
+  const insets = useSafeAreaInsets();
+  const [wallets, setWallets] = useState(INITIAL_WALLETS);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  
+  // Form State
+  const [name, setName] = useState('');
+  const [type, setType] = useState('Bank'); // Bank | E-Wallet | Cash
+  const balanceInput = useRupiahInput('');
+  const [number, setNumber] = useState('');
+
+  useEffect(() => {
+    loadWallets();
+  }, []);
+
+  const loadWallets = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('user_wallets');
+      if (stored) {
+        setWallets(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.log('Failed to load wallets');
+    }
+  };
+
+  const saveWallets = async (newWallets: any) => {
+    try {
+      setWallets(newWallets);
+      await AsyncStorage.setItem('user_wallets', JSON.stringify(newWallets));
+    } catch (e) {
+      console.log('Failed to save wallets');
+    }
+  };
+
+  const handleAddWallet = () => {
+    if (!name || !balanceInput.rawValue) {
+      Alert.alert('Gagal', 'Nama dan Saldo wajib diisi!');
+      return;
+    }
+
+    let color1 = '#475569';
+    let color2 = '#1E293B';
+    let icon = 'wallet';
+
+    if (type === 'Bank') {
+      color1 = '#8B5CF6'; color2 = '#5B21B6'; icon = 'bank';
+    } else if (type === 'E-Wallet') {
+      color1 = '#0EA5E9'; color2 = '#0369A1'; icon = 'cellphone';
+    } else if (type === 'Cash') {
+      color1 = '#10B981'; color2 = '#047857'; icon = 'cash';
+    }
+
+    const newWallet = {
+      id: Date.now().toString(),
+      name,
+      type,
+      balance: balanceInput.value,
+      number: number || '-',
+      icon,
+      color1,
+      color2
+    };
+
+    saveWallets([...wallets, newWallet]);
+    setIsModalVisible(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setName('');
+    setType('Bank');
+    balanceInput.reset();
+    setNumber('');
+  };
+
+  const handleDelete = (id: string, walletName: string) => {
+    Alert.alert(
+      'Hapus Rekening',
+      `Apakah Anda yakin ingin menghapus ${walletName}?`,
+      [
+        { text: 'Batal', style: 'cancel' },
+        { 
+          text: 'Hapus', 
+          style: 'destructive',
+          onPress: () => {
+            const updated = wallets.filter(w => w.id !== id);
+            saveWallets(updated);
+          }
+        }
+      ]
+    );
+  };
 
   return (
-    <ScrollView className="flex-1 bg-[#F9FAFB]" contentContainerClassName="p-6 pt-[60px]">
+    <View className="flex-1" style={{ backgroundColor: '#EEF3F9', paddingTop: insets.top }}>
+      
       {/* Header */}
-      <View className="flex-row justify-between items-center mb-10">
-        <Pressable onPress={() => router.back()} className="w-10 h-10 rounded-full justify-center items-center">
-          <Feather name="chevron-left" size={24} color="black" />
-        </Pressable>
-        <Text className="text-base font-['Nunito_700Bold'] text-black">Aset Saya</Text>
-        <Pressable className="w-10 h-10 rounded-full justify-center items-center">
-          <Feather name="bar-chart-2" size={20} color="black" />
+      <View className="flex-row items-center justify-between px-6 pt-4 pb-2">
+        <Text className="text-[26px] font-['Nunito_800ExtraBold'] text-[#0F172A] tracking-tight">Dompet</Text>
+        <Pressable 
+          onPress={() => setIsModalVisible(true)}
+          className="w-10 h-10 rounded-full bg-white items-center justify-center border border-[#E2EAF3]"
+        >
+          <Feather name="plus" size={20} color="#0369A1" />
         </Pressable>
       </View>
 
-      {/* Main Balance */}
-      <View className="mb-10">
-        <View className="flex-row items-baseline mb-3">
-          <Text className="text-[32px] font-['Nunito_800ExtraBold'] text-black">Rp </Text>
-          <Text className="text-[48px] font-['Nunito_800ExtraBold'] text-black tracking-tighter">58.274</Text>
-          <Text className="text-[32px] font-['Nunito_800ExtraBold'] text-[#8E8E93]">.300</Text>
-          <Pressable className="w-7 h-7 rounded-full bg-black justify-center items-center ml-3 self-center">
-            <AntDesign name="plus" size={16} color="white" />
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 110 }}
+      >
+        {/* Total Assets Card */}
+        <View 
+          className="bg-white p-6 rounded-[24px] mb-8"
+          style={{
+            shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.03, shadowRadius: 10, elevation: 2,
+          }}
+        >
+          <Text className="text-[14px] font-['Nunito_600SemiBold'] text-[#64748B] mb-2">Total Aset Bersih</Text>
+          <View className="flex-row items-baseline mb-5">
+            <Text className="text-[20px] font-['Nunito_800ExtraBold'] text-[#0F172A] mr-1">Rp</Text>
+            <Text className="text-[36px] font-['Nunito_800ExtraBold'] text-[#0F172A] tracking-tight">25.089.100</Text>
+          </View>
+
+          {/* Asset Proportion Bar */}
+          <View className="mb-2">
+            <View className="flex-row justify-between mb-2">
+              <Text className="text-[12px] font-['Nunito_700Bold'] text-[#475569]">Proporsi Aset</Text>
+            </View>
+            <View className="h-3 rounded-full flex-row overflow-hidden bg-[#F1F5F9]">
+              <View className="h-full bg-[#005AAA]" style={{ width: '58%' }} />
+              <View className="h-full bg-[#F97316]" style={{ width: '33%' }} />
+              <View className="h-full bg-[#00AED6]" style={{ width: '5%' }} />
+              <View className="h-full bg-[#10B981]" style={{ width: '4%' }} />
+            </View>
+          </View>
+        </View>
+
+        <Text className="text-[18px] font-['Nunito_800ExtraBold'] text-[#0F172A] mb-4 ml-2">
+          Daftar Rekening
+        </Text>
+
+        {/* Wallets List */}
+        {wallets.map((wallet) => (
+          <LinearGradient
+            key={wallet.id}
+            colors={[wallet.color1, wallet.color2]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            className="rounded-[24px] p-5 mb-4 relative overflow-hidden"
+            style={{
+              shadowColor: wallet.color1, shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: 0.25, shadowRadius: 12, elevation: 6,
+            }}
+          >
+            {/* Dekorasi Card Pattern */}
+            <View className="absolute -right-6 -top-10 w-32 h-32 rounded-full bg-white/10" />
+            <View className="absolute -right-10 bottom-0 w-24 h-24 rounded-full bg-white/10" />
+
+            <View className="flex-row justify-between items-center mb-6">
+              <View className="flex-row items-center">
+                <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center mr-3">
+                  <MaterialCommunityIcons name={wallet.icon as any} size={20} color="white" />
+                </View>
+                <View>
+                  <Text className="text-[16px] font-['Nunito_800ExtraBold'] text-white">{wallet.name}</Text>
+                  <Text className="text-[12px] font-['Nunito_600SemiBold'] text-white/80">{wallet.type}</Text>
+                </View>
+              </View>
+              <Pressable onPress={() => handleDelete(wallet.id, wallet.name)} hitSlop={10}>
+                <Feather name="trash-2" size={18} color="rgba(255,255,255,0.8)" />
+              </Pressable>
+            </View>
+
+            <View className="flex-row justify-between items-end">
+              <View>
+                <Text className="text-[12px] font-['Nunito_600SemiBold'] text-white/70 mb-1">Saldo Tersedia</Text>
+                <Text className="text-[22px] font-['Nunito_800ExtraBold'] text-white">{wallet.balance}</Text>
+              </View>
+              <Text className="text-[13px] font-['Nunito_700Bold'] text-white/90 tracking-widest">{wallet.number}</Text>
+            </View>
+          </LinearGradient>
+        ))}
+      </ScrollView>
+
+      {/* Modal Tambah Rekening */}
+      <Modal visible={isModalVisible} transparent={true} animationType="fade">
+        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+        
+        <Pressable 
+          style={StyleSheet.absoluteFill} 
+          onPress={() => { setIsModalVisible(false); resetForm(); }} 
+        />
+
+        <View className="absolute bottom-0 w-full bg-white rounded-t-[32px] pt-4 pb-8 px-6 shadow-xl">
+          <View className="w-12 h-1.5 bg-[#E2EAF3] rounded-full self-center mb-6" />
+          
+          <Text className="text-[20px] font-['Nunito_800ExtraBold'] text-[#0F172A] mb-5 text-center">
+            Tambah Rekening Baru
+          </Text>
+
+          {/* Form Input */}
+          <Text className="text-[12px] font-['Nunito_700Bold'] text-[#374151] mb-1.5 ml-1">Nama Rekening / Bank</Text>
+          <View className="bg-[#F9FAFB] rounded-2xl px-4 mb-4 border border-[#E5E7EB] h-[52px] justify-center">
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Contoh: BCA Pribadi, DANA"
+              className="flex-1 text-[15px] font-['Nunito_600SemiBold'] text-[#111827]"
+            />
+          </View>
+
+          <Text className="text-[12px] font-['Nunito_700Bold'] text-[#374151] mb-1.5 ml-1">Kategori</Text>
+          <View className="flex-row gap-2 mb-4">
+            {['Bank', 'E-Wallet', 'Cash'].map(opt => (
+              <Pressable
+                key={opt}
+                onPress={() => setType(opt)}
+                className={`flex-1 items-center justify-center py-3 rounded-2xl border ${type === opt ? 'bg-[#EFF6FF] border-[#3B82F6]' : 'bg-[#F9FAFB] border-[#E5E7EB]'}`}
+              >
+                <Text className={`text-[13px] ${type === opt ? "font-['Nunito_800ExtraBold'] text-[#1D4ED8]" : "font-['Nunito_600SemiBold'] text-[#6B7280]"}`}>{opt}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text className="text-[12px] font-['Nunito_700Bold'] text-[#374151] mb-1.5 ml-1">Saldo Awal</Text>
+          <View className="bg-[#F9FAFB] rounded-2xl px-4 mb-4 border border-[#E5E7EB] h-[52px] justify-center">
+            <TextInput
+              value={balanceInput.value}
+              onChangeText={balanceInput.onChangeText}
+              keyboardType="numeric"
+              placeholder="Contoh: Rp 1.500.000"
+              className="flex-1 text-[15px] font-['Nunito_600SemiBold'] text-[#111827]"
+            />
+          </View>
+
+          <Text className="text-[12px] font-['Nunito_700Bold'] text-[#374151] mb-1.5 ml-1">Nomor Rekening / HP (Opsional)</Text>
+          <View className="bg-[#F9FAFB] rounded-2xl px-4 mb-6 border border-[#E5E7EB] h-[52px] justify-center">
+            <TextInput
+              value={number}
+              onChangeText={setNumber}
+              keyboardType="number-pad"
+              placeholder="Contoh: 1234567890"
+              className="flex-1 text-[15px] font-['Nunito_600SemiBold'] text-[#111827]"
+            />
+          </View>
+
+          {/* Tombol Simpan */}
+          <Pressable onPress={handleAddWallet}>
+            <LinearGradient
+              colors={['#0369A1', '#0284C7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              className="rounded-2xl h-[52px] items-center justify-center"
+            >
+              <Text className="text-white text-[16px] font-['Nunito_800ExtraBold']">
+                Simpan Rekening
+              </Text>
+            </LinearGradient>
           </Pressable>
         </View>
-        <View className="flex-row items-center">
-          <Badge text="6.3%" color="#ECFDF3" textColor="#027A48" />
-          <Text className="ml-2 text-[13px] font-['Nunito_600SemiBold'] text-[#8E8E93]">
-            Bulan ke Bulan <AntDesign name="down" size={10} color="#8E8E93" />
-          </Text>
-        </View>
-      </View>
+      </Modal>
 
-      {/* Sources */}
-      <View className="mb-10">
-        <Text className="text-sm text-[#8E8E93] font-['Nunito_600SemiBold'] mb-4">Sumber Dana</Text>
-        
-        {/* Horizontal Bar */}
-        <View className="flex-row h-6 rounded-xl overflow-hidden mb-6 gap-0.5">
-          <View className="h-full flex-[10] bg-[#FF4B4B]" />
-          <View className="h-full flex-[13] bg-[#FF7F50]" />
-          <View className="h-full flex-[18] bg-[#34C759]" />
-          <View className="h-full flex-[25] bg-[#007AFF]" />
-          <View className="h-full flex-[34] bg-[#AF52DE]" />
-        </View>
-
-        {/* Legend */}
-        <View className="gap-4">
-          <LegendItem color="#FF4B4B" name="BCA" percentage="10%" amount="Rp 5.827.400" />
-          <LegendItem color="#FF7F50" name="Mandiri" percentage="13%" amount="Rp 7.575.600" />
-          <LegendItem color="#34C759" name="Tunai" percentage="18%" amount="Rp 10.489.300" />
-          <LegendItem color="#007AFF" name="Tabungan" percentage="25%" amount="Rp 14.568.600" />
-          <LegendItem color="#AF52DE" name="Investasi" percentage="34%" amount="Rp 19.813.200" />
-        </View>
-      </View>
-
-      {/* Incomes */}
-      <View className="mt-2">
-        <Text className="text-sm text-[#8E8E93] font-['Nunito_600SemiBold'] mb-4">Pemasukan Terakhir</Text>
-        <TransactionItem 
-          title="Gaji Bulanan"
-          subtitle="15 Jun 08:00"
-          badgeText="BCA"
-          badgeColor="blue"
-          amount="Rp 15.000.000"
-        />
-        <TransactionItem 
-          title="Pencairan Deposito"
-          subtitle="26 Jun 13:30"
-          badgeText="Tabungan"
-          badgeColor="purple"
-          amount="Rp 10.000.000"
-        />
-        <TransactionItem 
-          title="Dividen Saham"
-          subtitle="26 Jun 18:30"
-          badgeText="Investasi"
-          badgeColor="green"
-          amount="Rp 5.000.000"
-        />
-      </View>
-    </ScrollView>
-  );
-}
-
-function LegendItem({ color, name, percentage, amount }: { color: string, name: string, percentage: string, amount: string }) {
-  return (
-    <View className="flex-row justify-between items-center">
-      <View className="flex-row items-center">
-        <View className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: color }} />
-        <Text className="text-sm font-['Nunito_700Bold'] text-black mr-2">{name}</Text>
-        <View className="bg-[#F2F2F7] px-1.5 py-0.5 rounded-md">
-          <Text className="text-[10px] font-['Nunito_700Bold'] text-[#8E8E93]">{percentage}</Text>
-        </View>
-      </View>
-      <Text className="text-sm font-['Nunito_700Bold'] text-black">{amount}</Text>
     </View>
   );
 }
