@@ -71,37 +71,6 @@ export default function LimitDayScreen() {
 
         {isLimitEnabled && (
           <View className="animate-fade-in">
-            
-            {/* Tombol AI Generator */}
-            <Pressable 
-              onPress={() => router.push('/ProfilePage/LimitDayWizard')}
-              className="mb-6 rounded-[20px] p-1 overflow-hidden"
-            >
-              <LinearGradient
-                colors={['#8B5CF6', '#6D28D9']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="rounded-[16px] px-5 py-4 flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center flex-1">
-                  <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center mr-3">
-                    <MaterialCommunityIcons name="auto-fix" size={20} color="white" />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-[15px] font-['Nunito_800ExtraBold'] text-white mb-0.5">Atur Otomatis dengan AI</Text>
-                    <Text className="text-[12px] font-['Nunito_600SemiBold'] text-white/80">Kalkulasi ideal berdasarkan data Anda</Text>
-                  </View>
-                </View>
-                <Feather name="chevron-right" size={20} color="white" />
-              </LinearGradient>
-            </Pressable>
-
-            {/* Atau Input Manual */}
-            <View className="flex-row items-center justify-center mb-4">
-              <View className="flex-1 h-[1px] bg-[#E2EAF3]" />
-              <Text className="text-[12px] font-['Nunito_700Bold'] text-[#94A3B8] mx-3">ATAU INPUT MANUAL</Text>
-              <View className="flex-1 h-[1px] bg-[#E2EAF3]" />
-            </View>
 
             {/* Input Nominal Batas */}
             <Text className="text-[14px] font-['Nunito_700Bold'] text-[#374151] mb-2 ml-2">Anggaran Maksimal (Harian)</Text>

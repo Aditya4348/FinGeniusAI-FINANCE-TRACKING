@@ -14,7 +14,7 @@ import { Feather, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/v
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const DUMMY_EMAIL = 'aditya@fingeniusai.com';
-const DUMMY_PASSWORD = 'password123';
+const DUMMY_PASSWORD = 'Password123';
 
 export default function LoginScreen() {
   const router = useRouter();

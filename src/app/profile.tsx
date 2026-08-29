@@ -67,13 +67,6 @@ export default function ProfileScreen() {
               <Text className="text-[11px] font-['Nunito_700Bold'] text-black text-center leading-tight">Pengaturan AI</Text>
             </Pressable>
 
-            <Pressable className="items-center w-[22%]">
-              <View className="w-12 h-12 rounded-2xl bg-[#EFF8FF] items-center justify-center mb-2">
-                <Ionicons name="wallet" size={24} color="#0284C7" />
-              </View>
-              <Text className="text-[11px] font-['Nunito_700Bold'] text-black text-center leading-tight">Sumber Dana</Text>
-            </Pressable>
-
             <Pressable 
             onPress={() => router.push('/ProfilePage/LimitDay')}
             className="items-center w-[22%]">
@@ -83,7 +76,9 @@ export default function ProfileScreen() {
               <Text className="text-[11px] font-['Nunito_700Bold'] text-black text-center leading-tight">Batas Harian</Text>
             </Pressable>
 
-            <Pressable className="items-center w-[22%]">
+            <Pressable 
+            onPress={() => router.push('/ProfilePage/Category')}
+            className="items-center w-[22%]">
               <View className="w-12 h-12 rounded-2xl bg-[#ECFDF3] items-center justify-center mb-2">
                 <Ionicons name="pie-chart" size={22} color="#027A48" />
               </View>

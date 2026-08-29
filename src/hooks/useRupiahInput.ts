@@ -1,8 +1,11 @@
 import { useState } from 'react';
 
 export function useRupiahInput(initialValue: string = '') {
-  const [value, setValue] = useState(initialValue);
-  const [rawValue, setRawValue] = useState(initialValue);
+  const numericOnly = initialValue.replace(/[^0-9]/g, '');
+  const initialFormatted = numericOnly ? `Rp ${parseInt(numericOnly, 10).toLocaleString('id-ID')}` : '';
+
+  const [value, setValue] = useState(initialFormatted);
+  const [rawValue, setRawValue] = useState(numericOnly);
 
   const onChangeText = (text: string) => {
     // Hanya ambil angka dari input
