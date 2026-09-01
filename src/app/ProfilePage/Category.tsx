@@ -1,11 +1,19 @@
-import { View, Text, ScrollView, Pressable, Switch, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch, Platform, UIManager, Modal, TextInput, KeyboardAvoidingView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Feather, MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Data Dummy Prototype
-const EXPENSE_CATEGORIES = [
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android') {
+  if (UIManager.setLayoutAnimationEnabledExperimental) {
+    UIManager.setLayoutAnimationEnabledExperimental(true);
+  }
+}
+
+// Data Dummy Defaults
+const DEFAULT_EXPENSE_CATEGORIES = [
   { id: '1', name: 'Makanan & Minuman', icon: 'coffee', color: '#F59E0B', bg: '#FFFBEB', locked: true },
   { id: '2', name: 'Transportasi', icon: 'navigation', color: '#3B82F6', bg: '#EFF6FF', locked: true },
   { id: '3', name: 'Tagihan & Cicilan', icon: 'file-text', color: '#EF4444', bg: '#FEF2F2', locked: true },
@@ -14,10 +22,24 @@ const EXPENSE_CATEGORIES = [
   { id: '6', name: 'Kopi & Nongkrong', icon: 'smile', color: '#A855F7', bg: '#FAF5FF', locked: false },
 ];
 
-const INCOME_CATEGORIES = [
+const DEFAULT_INCOME_CATEGORIES = [
   { id: '7', name: 'Gaji Pokok', icon: 'briefcase', color: '#10B981', bg: '#F0FDF4', locked: true },
   { id: '8', name: 'Investasi & Bunga', icon: 'trending-up', color: '#3B82F6', bg: '#EFF6FF', locked: true },
   { id: '9', name: 'Hadiah / Bonus', icon: 'gift', color: '#F59E0B', bg: '#FFFBEB', locked: false },
+];
+
+// Options for CRUD Modal
+const ICON_OPTIONS = ['coffee', 'navigation', 'file-text', 'shopping-cart', 'tv', 'smile', 'briefcase', 'trending-up', 'gift', 'heart', 'home', 'monitor', 'smartphone', 'tool', 'zap', 'activity', 'book', 'camera', 'music', 'truck'];
+
+const COLOR_OPTIONS = [
+  { color: '#F59E0B', bg: '#FFFBEB' },
+  { color: '#3B82F6', bg: '#EFF6FF' },
+  { color: '#EF4444', bg: '#FEF2F2' },
+  { color: '#10B981', bg: '#F0FDF4' },
+  { color: '#8B5CF6', bg: '#F3E8FF' },
+  { color: '#A855F7', bg: '#FAF5FF' },
+  { color: '#EC4899', bg: '#FDF2F8' },
+  { color: '#F97316', bg: '#FFF7ED' },
 ];
 
 export default function CategoryScreen() {
@@ -27,10 +49,120 @@ export default function CategoryScreen() {
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [aiAutoCreate, setAiAutoCreate] = useState(true);
 
-  const displayData = activeTab === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
+  // State untuk Data Kategori
+  const [expenseCategories, setExpenseCategories] = useState(DEFAULT_EXPENSE_CATEGORIES);
+  const [incomeCategories, setIncomeCategories] = useState(DEFAULT_INCOME_CATEGORIES);
+
+  // State untuk Modal CRUD
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState('');
+  
+  const [formName, setFormName] = useState('');
+  const [formIcon, setFormIcon] = useState(ICON_OPTIONS[0]);
+  const [formColor, setFormColor] = useState(COLOR_OPTIONS[0]);
+
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const storedExpense = await AsyncStorage.getItem('expense_categories');
+      const storedIncome = await AsyncStorage.getItem('income_categories');
+      
+      if (storedExpense) setExpenseCategories(JSON.parse(storedExpense));
+      if (storedIncome) setIncomeCategories(JSON.parse(storedIncome));
+    } catch (e) {
+      console.log('Failed to load categories', e);
+    }
+  };
+
+  const saveCategories = async (expense: any, income: any) => {
+    try {
+      await AsyncStorage.setItem('expense_categories', JSON.stringify(expense));
+      await AsyncStorage.setItem('income_categories', JSON.stringify(income));
+      setExpenseCategories(expense);
+      setIncomeCategories(income);
+    } catch (e) {
+      console.log('Failed to save categories', e);
+    }
+  };
+
+  const displayData = activeTab === 'expense' ? expenseCategories : incomeCategories;
 
   const handleTabChange = (tab: 'expense' | 'income') => {
     setActiveTab(tab);
+  };
+
+  // FUNGSI CRUD
+  const openCreateModal = () => {
+    setEditMode(false);
+    setEditingId('');
+    setFormName('');
+    setFormIcon(ICON_OPTIONS[0]);
+    setFormColor(COLOR_OPTIONS[0]);
+    setModalVisible(true);
+  };
+  
+  const openEditModal = (cat: any) => {
+    if (cat.locked) return; // Kategori bawaan tidak bisa diedit
+    setEditMode(true);
+    setEditingId(cat.id);
+    setFormName(cat.name);
+    setFormIcon(cat.icon);
+    const matchedColor = COLOR_OPTIONS.find(c => c.color === cat.color) || COLOR_OPTIONS[0];
+    setFormColor(matchedColor);
+    setModalVisible(true);
+  };
+  
+  const handleSaveCategory = () => {
+    if (!formName.trim()) return;
+    
+    const newCategory = {
+      id: editMode ? editingId : Date.now().toString(),
+      name: formName,
+      icon: formIcon,
+      color: formColor.color,
+      bg: formColor.bg,
+      locked: false, // Kategori buatan user tidak dilock
+    };
+    
+    let newExpense = [...expenseCategories];
+    let newIncome = [...incomeCategories];
+    
+    if (editMode) {
+      if (activeTab === 'expense') {
+        const index = newExpense.findIndex(c => c.id === editingId);
+        if (index > -1) newExpense[index] = newCategory;
+      } else {
+        const index = newIncome.findIndex(c => c.id === editingId);
+        if (index > -1) newIncome[index] = newCategory;
+      }
+    } else {
+      if (activeTab === 'expense') {
+        newExpense.push(newCategory);
+      } else {
+        newIncome.push(newCategory);
+      }
+    }
+    
+    saveCategories(newExpense, newIncome);
+    setModalVisible(false);
+  };
+  
+  const handleDeleteCategory = () => {
+    let newExpense = [...expenseCategories];
+    let newIncome = [...incomeCategories];
+    
+    if (activeTab === 'expense') {
+      newExpense = newExpense.filter(c => c.id !== editingId);
+    } else {
+      newIncome = newIncome.filter(c => c.id !== editingId);
+    }
+    
+    saveCategories(newExpense, newIncome);
+    setModalVisible(false);
   };
 
   return (
@@ -52,7 +184,7 @@ export default function CategoryScreen() {
         </Pressable>
       </View>
 
-      {/* TABS KUSTOM (SANGAT DIREKOMENDASIKAN UNTUK KASUS INI) */}
+      {/* TABS */}
       <View className="px-6 mt-4 mb-2">
         <View className="flex-row bg-[#E2EAF3] rounded-2xl p-1">
           <Pressable 
@@ -95,7 +227,6 @@ export default function CategoryScreen() {
               >
                 <View className="flex-row items-center flex-1">
                   <View className="w-12 h-12 rounded-2xl items-center justify-center mr-4" style={{ backgroundColor: cat.bg }}>
-                    {/* Menggunakan 'as any' untuk mencegah error TypeScript karena tipe data array terdeteksi sebagai string biasa */}
                     <Feather name={cat.icon as any} size={24} color={cat.color} />
                   </View>
                   <Text className="text-[15px] font-['Nunito_700Bold'] text-[#0F172A]">{cat.name}</Text>
@@ -106,7 +237,7 @@ export default function CategoryScreen() {
                     <Feather name="lock" size={16} color="#CBD5E1" />
                   </View>
                 ) : (
-                  <Pressable className="px-2">
+                  <Pressable onPress={() => openEditModal(cat)} className="px-2 py-2">
                     <Feather name="edit-2" size={18} color="#94A3B8" />
                   </Pressable>
                 )}
@@ -115,10 +246,12 @@ export default function CategoryScreen() {
           </View>
         </View>
 
-
         {/* TOMBOL TAMBAH */}
         <View className="px-6 mt-6">
-          <Pressable className="flex-row items-center justify-center py-4 bg-white border-2 border-dashed border-[#CBD5E1] rounded-[20px]">
+          <Pressable 
+            onPress={openCreateModal}
+            className="flex-row items-center justify-center py-4 bg-white border-2 border-dashed border-[#CBD5E1] rounded-[20px]"
+          >
             <Feather name="plus-circle" size={20} color="#3B82F6" />
             <Text className="text-[15px] font-['Nunito_800ExtraBold'] text-[#3B82F6] ml-2">Buat Kategori Baru</Text>
           </Pressable>
@@ -153,7 +286,10 @@ export default function CategoryScreen() {
             </View>
 
             {/* Smart Mapping Button */}
-            <Pressable className="flex-row items-center justify-between p-4">
+            <Pressable 
+              onPress={() => router.push('/ProfilePage/MappingAI')}
+              className="flex-row items-center justify-between p-4"
+            >
               <View className="flex-row items-center flex-1 pr-4">
                 <View className="w-10 h-10 rounded-full bg-[#EFF6FF] items-center justify-center mr-3">
                   <Feather name="git-merge" size={18} color="#3B82F6" />
@@ -167,8 +303,95 @@ export default function CategoryScreen() {
             </Pressable>
           </View>
         </View>
-
       </ScrollView>
+
+      {/* MODAL CRUD CATEGORY */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 justify-end bg-black/50"
+        >
+          <View className="bg-white rounded-t-[32px] p-6 pb-10 shadow-lg">
+            <View className="flex-row items-center justify-between mb-6">
+              <Text className="text-[20px] font-['Nunito_800ExtraBold'] text-[#0F172A]">
+                {editMode ? 'Edit Kategori' : 'Kategori Baru'}
+              </Text>
+              <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 rounded-full bg-[#F1F5F9] items-center justify-center">
+                <Feather name="x" size={18} color="#64748B" />
+              </Pressable>
+            </View>
+
+            {/* Input Nama */}
+            <Text className="text-[14px] font-['Nunito_700Bold'] text-[#64748B] mb-2">Nama Kategori</Text>
+            <TextInput
+              value={formName}
+              onChangeText={setFormName}
+              placeholder="Cth: Belanja Sayur"
+              className="bg-[#F8FAFC] rounded-2xl p-4 text-[16px] font-['Nunito_600SemiBold'] text-[#0F172A] mb-6"
+              style={{ borderWidth: 1, borderColor: '#E2EAF3' }}
+            />
+
+            {/* Pilih Icon */}
+            <Text className="text-[14px] font-['Nunito_700Bold'] text-[#64748B] mb-2">Pilih Ikon</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
+              <View className="flex-row">
+                {ICON_OPTIONS.map((iconName) => (
+                  <Pressable 
+                    key={iconName} 
+                    onPress={() => setFormIcon(iconName)}
+                    className="w-12 h-12 rounded-2xl items-center justify-center mr-3"
+                    style={{ backgroundColor: formIcon === iconName ? formColor.bg : '#F8FAFC', borderWidth: formIcon === iconName ? 2 : 1, borderColor: formIcon === iconName ? formColor.color : '#E2EAF3' }}
+                  >
+                    <Feather name={iconName as any} size={20} color={formIcon === iconName ? formColor.color : '#94A3B8'} />
+                  </Pressable>
+                ))}
+              </View>
+            </ScrollView>
+
+            {/* Pilih Warna */}
+            <Text className="text-[14px] font-['Nunito_700Bold'] text-[#64748B] mb-2">Pilih Warna</Text>
+            <View className="flex-row flex-wrap mb-8">
+              {COLOR_OPTIONS.map((c, index) => (
+                <Pressable
+                  key={index}
+                  onPress={() => setFormColor(c)}
+                  className="w-10 h-10 rounded-full items-center justify-center mr-4 mb-3"
+                  style={{ backgroundColor: c.bg, borderWidth: formColor.color === c.color ? 2 : 0, borderColor: c.color }}
+                >
+                  <View className="w-5 h-5 rounded-full" style={{ backgroundColor: c.color }} />
+                </Pressable>
+              ))}
+            </View>
+
+            {/* Tombol Simpan & Hapus */}
+            <View className="flex-row items-center">
+              {editMode && (
+                <Pressable 
+                  onPress={handleDeleteCategory}
+                  className="w-14 h-14 rounded-2xl bg-[#FEF2F2] items-center justify-center mr-4"
+                >
+                  <Feather name="trash-2" size={24} color="#EF4444" />
+                </Pressable>
+              )}
+              <Pressable 
+                onPress={handleSaveCategory}
+                className="flex-1 h-14 rounded-2xl items-center justify-center"
+                style={{ backgroundColor: formName.trim() ? '#3B82F6' : '#94A3B8' }}
+                disabled={!formName.trim()}
+              >
+                <Text className="text-[16px] font-['Nunito_800ExtraBold'] text-white">Simpan Kategori</Text>
+              </Pressable>
+            </View>
+
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </View>
   );
 }
