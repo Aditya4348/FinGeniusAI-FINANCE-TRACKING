@@ -1,9 +1,27 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# 1. Dependencies (Node.js)
 node_modules/
-package-lock.json
+npm-debug.log*
+yarn-error.log*
 
-
-# environment variables
+# 2. Environment Variables (Sangat rahasia)
 .env
+.env.*
+!.env.example  # Kecualikan .env.example agar tetap masuk ke Git sebagai template
+
+# 3. TypeScript Build Output
+dist/
+build/
+
+# 4. Prisma Custom Client (Hanya jika pakai custom output)
+/src/generated/prisma/
+*.db           # Ignore file SQLite jika kamu sedang testing pakai SQLite
+*.db-journal
+
+# 5. OS & Editor generated files (Opsional tapi rapi)
+.DS_Store
+.vscode/
+
+# AI Editor & Agent configurations
+.agents/
+.claude/
+.windsurf/
