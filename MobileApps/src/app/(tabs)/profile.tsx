@@ -1,30 +1,73 @@
-import { View, Text, ScrollView, Image, Pressable } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, Alert } from "react-native";
 import {
   Feather,
   Ionicons,
   FontAwesome5,
   MaterialIcons,
 } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useState, useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const [profileData, setProfileData] = useState({
+    name: "ADITYA ALFITODINOVA",
+    phone: "0812 •••• 8899",
+    avatarUri: "https://i.pravatar.cc/150?img=11",
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadProfile = async () => {
+        try {
+          const stored = await AsyncStorage.getItem("user_account_settings");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            setProfileData({
+              name: parsed.name ? parsed.name.toUpperCase() : "ADITYA ALFITODINOVA",
+              phone: parsed.phone || "0812 •••• 8899",
+              avatarUri: parsed.avatarUri || "https://i.pravatar.cc/150?img=11",
+            });
+          }
+        } catch {}
+      };
+      loadProfile();
+    }, [])
+  );
 
   const MenuItem = ({
     icon,
     label,
     color,
     isDestructive = false,
+    badge,
+    onPress,
   }: {
     icon: any;
     label: string;
     color: string;
     isDestructive?: boolean;
+    badge?: string;
+    onPress?: () => void;
   }) => (
-    <Pressable className="flex-row items-center justify-between py-4 border-b border-[#F2F2F7]">
-      <View className="flex-row items-center">
+    <Pressable
+      onPress={
+        onPress ||
+        (badge
+          ? () =>
+              Alert.alert(
+                label,
+                "Fitur ini sedang dalam pengembangan dan akan segera hadir pada pembaruan mendatang."
+              )
+          : undefined)
+      }
+      className="flex-row items-center justify-between py-4 border-b border-[#F2F2F7]"
+    >
+      <View className="flex-row items-center flex-1 pr-2">
         <View
           className="w-8 h-8 rounded-full items-center justify-center mr-3"
           style={{ backgroundColor: color + "15" }}
@@ -37,7 +80,16 @@ export default function ProfileScreen() {
           {label}
         </Text>
       </View>
-      <Feather name="chevron-right" size={20} color="#C7C7CC" />
+      <View className="flex-row items-center">
+        {badge && (
+          <View className="bg-[#F1F5F9] px-2.5 py-0.5 rounded-full border border-[#E2E8F0] mr-2">
+            <Text className="text-[10px] font-['Nunito_800ExtraBold'] text-[#64748B]">
+              {badge}
+            </Text>
+          </View>
+        )}
+        <Feather name="chevron-right" size={20} color="#C7C7CC" />
+      </View>
     </Pressable>
   );
 
@@ -59,7 +111,7 @@ export default function ProfileScreen() {
             <View className="relative">
               <View className="w-[72px] h-[72px] rounded-full border-2 border-white overflow-hidden mr-4 bg-[#F2F2F7]">
                 <Image
-                  source={{ uri: "https://i.pravatar.cc/150?img=11" }}
+                  source={{ uri: profileData.avatarUri }}
                   className="w-full h-full"
                 />
               </View>
@@ -72,10 +124,10 @@ export default function ProfileScreen() {
 
             <View className="flex-1">
               <Text className="text-white text-[19px] font-['Nunito_800ExtraBold'] tracking-wide">
-                ADITYA ALFITODINOVA
+                {profileData.name}
               </Text>
               <Text className="text-white/80 text-[14px] font-['Nunito_600SemiBold'] mt-0.5">
-                0812 •••• 8899
+                {profileData.phone}
               </Text>
             </View>
           </View>
@@ -165,21 +217,25 @@ export default function ProfileScreen() {
             icon={<Feather name="user" size={16} color="#0369A1" />}
             label="Pengaturan Akun"
             color="#0369A1"
+            onPress={() => router.push("/ProfilePage/AccountSettings")}
           />
           <MenuItem
             icon={<Feather name="shield" size={16} color="#059669" />}
             label="Keamanan & Privasi"
             color="#059669"
+            badge="Segera Hadir"
           />
           <MenuItem
             icon={<Feather name="bell" size={16} color="#D97706" />}
             label="Notifikasi"
             color="#D97706"
+            badge="Segera Hadir"
           />
           <MenuItem
             icon={<Feather name="help-circle" size={16} color="#4B5563" />}
             label="Bantuan & Dukungan"
             color="#4B5563"
+            badge="Segera Hadir"
           />
 
           <View className="mt-4 border-t border-[#F2F2F7] pt-2">
