@@ -15,13 +15,13 @@ const SPENDING_DATA = [
 
 const PERIOD_OPTIONS = ['Bulan Ini', 'Bulan Lalu', '3 Bulan Terakhir', 'Tahun Ini'];
 
-export default function AnalyticsScreen() {
+export default function AnalyticsScreen({ embedded = false }: { embedded?: boolean }) {
   const insets = useSafeAreaInsets();
   const [period, setPeriod] = useState('Bulan Ini');
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   return (
-    <View className="flex-1" style={{ backgroundColor: '#EEF3F9', paddingTop: insets.top }}>
+    <View className="flex-1" style={{ backgroundColor: '#EEF3F9', paddingTop: embedded ? 0 : insets.top }}>
       
       {/* Header & Period Selector */}
       <View className="flex-row items-center justify-between px-6 pt-4 pb-2">
@@ -142,7 +142,16 @@ export default function AnalyticsScreen() {
         />
 
         {/* Bottom Sheet Menu */}
-        <View className="absolute bottom-0 w-full bg-white rounded-t-[32px] pt-4 pb-8 px-6 shadow-xl">
+        <View 
+          className="absolute bottom-0 w-full bg-white rounded-t-[32px] pt-4 pb-8 px-6"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 12,
+            elevation: 10,
+          }}
+        >
           {/* Handle Drag bar */}
           <View className="w-12 h-1.5 bg-[#E2EAF3] rounded-full self-center mb-6" />
           

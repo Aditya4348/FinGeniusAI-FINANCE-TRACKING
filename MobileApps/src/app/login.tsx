@@ -25,21 +25,32 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = (
+    credentials: { email: string; password: string } = { email, password },
+  ) => {
     setError('');
-    if (!email || !password) {
+    if (!credentials.email || !credentials.password) {
       setError('Email dan kata sandi tidak boleh kosong.');
       return;
     }
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      if (email === DUMMY_EMAIL && password === DUMMY_PASSWORD) {
+      if (credentials.email === DUMMY_EMAIL && credentials.password === DUMMY_PASSWORD) {
         router.replace('/(tabs)');
       } else {
         setError('Email atau kata sandi salah.');
       }
     }, 1200);
+  };
+
+  const handleQuickLogin = () => {
+    if (isLoading) return;
+
+    setEmail(DUMMY_EMAIL);
+    setPassword(DUMMY_PASSWORD);
+    setIsPasswordVisible(false);
+    handleLogin({ email: DUMMY_EMAIL, password: DUMMY_PASSWORD });
   };
 
   return (
@@ -195,7 +206,7 @@ export default function LoginScreen() {
             </Pressable>
 
             {/* Tombol Masuk */}
-            <Pressable onPress={handleLogin} disabled={isLoading} style={{ marginBottom: 20, opacity: isLoading ? 0.8 : 1 }}>
+            <Pressable onPress={() => handleLogin()} disabled={isLoading} style={{ marginBottom: 20, opacity: isLoading ? 0.8 : 1 }}>
               <LinearGradient
                 colors={['#1D4ED8', '#0369A1']}
                 start={{ x: 0, y: 0 }}
@@ -265,19 +276,49 @@ export default function LoginScreen() {
 
             {/* Info Prototype */}
             <View style={{
-              backgroundColor: '#EDE9FE', borderRadius: 16,
-              padding: 14, flexDirection: 'row', alignItems: 'flex-start', gap: 10,
+              backgroundColor: '#F5F3FF',
+              borderColor: '#DDD6FE',
+              borderWidth: 1,
+              borderRadius: 18,
+              padding: 16,
+              flexDirection: 'row',
+              alignItems: 'flex-start',
+              gap: 12,
             }}>
-              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#DDD6FE', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>
+              <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: '#E9D5FF', alignItems: 'center', justifyContent: 'center' }}>
                 <MaterialCommunityIcons name="robot-outline" size={18} color="#7C3AED" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: '#6D28D9', fontSize: 13, fontFamily: 'Nunito_800ExtraBold', marginBottom: 3 }}>
+                <Text style={{ color: '#5B21B6', fontSize: 14, fontFamily: 'Nunito_800ExtraBold', marginBottom: 3 }}>
                   Prototype Mode
                 </Text>
-                <Text style={{ color: '#7C3AED', fontSize: 12, fontFamily: 'Nunito_600SemiBold', lineHeight: 18 }}>
-                  Email: aditya@fingeniusai.com{'\n'}Password: password123
+                <Text style={{ color: '#6B5A8E', fontSize: 12, lineHeight: 18, fontFamily: 'Nunito_600SemiBold' }}>
+                  Coba aplikasi menggunakan akun demo tanpa mengisi formulir.
                 </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Masuk dengan akun demo"
+                  onPress={handleQuickLogin}
+                  disabled={isLoading}
+                  style={{
+                    alignSelf: 'flex-start',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 7,
+                    backgroundColor: isLoading ? '#A78BFA' : '#7C3AED',
+                    borderRadius: 12,
+                    paddingHorizontal: 14,
+                    height: 38,
+                    marginTop: 12,
+                    opacity: isLoading ? 0.8 : 1,
+                  }}
+                >
+                  <Text style={{ color: '#FFFFFF', fontSize: 12, fontFamily: 'Nunito_800ExtraBold' }}>
+                    {isLoading ? 'Memverifikasi...' : 'Masuk dengan akun demo'}
+                  </Text>
+                  {!isLoading && <Feather name="arrow-right" size={14} color="#FFFFFF" />}
+                </Pressable>
               </View>
             </View>
 

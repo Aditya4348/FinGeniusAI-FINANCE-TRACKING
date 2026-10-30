@@ -5,10 +5,12 @@ import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Enable LayoutAnimation on Android
-if (Platform.OS === 'android') {
+// Enable LayoutAnimation on Android (Old Architecture only)
+if (Platform.OS === 'android' && !(global as any)?._IS_FABRIC && !((global as any)?.nativeFabricUIManager)) {
   if (UIManager.setLayoutAnimationEnabledExperimental) {
-    UIManager.setLayoutAnimationEnabledExperimental(true);
+    try {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    } catch {}
   }
 }
 

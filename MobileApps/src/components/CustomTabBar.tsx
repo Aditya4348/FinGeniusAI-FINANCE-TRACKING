@@ -1,6 +1,6 @@
 import { View, Pressable, Text } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { AntDesign, Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -46,11 +46,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     } else if (route.name === 'history') {
       iconName = isFocused ? 'receipt' : 'receipt-outline';
       IconComponent = Ionicons;
-    } else if (route.name === 'analytics') {
-      iconName = isFocused ? 'pie-chart' : 'pie-chart-outline';
-      IconComponent = Ionicons;
     } else if (route.name === 'wallet') {
       iconName = isFocused ? 'card' : 'card-outline';
+      IconComponent = Ionicons;
+    } else if (route.name === 'profile') {
+      iconName = isFocused ? 'person' : 'person-outline';
       IconComponent = Ionicons;
     }
 
@@ -59,7 +59,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         key={route.key}
         accessibilityState={isFocused ? { selected: true } : {}}
         accessibilityLabel={options.tabBarAccessibilityLabel}
-        testID={options.tabBarTestID}
+        testID={(options as any).tabBarTestID || options.tabBarButtonTestID}
         onPress={onPress}
         onLongPress={onLongPress}
         className="flex-1 items-center justify-center pt-2 pb-1"
@@ -91,8 +91,15 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         
         {/* Action Button (Add) in the center */}
         <Pressable 
-          onPress={() => navigation.navigate('ai-input')}
-          className="bg-[#8B5CF6] w-14 h-14 rounded-full flex-col items-center justify-center -mt-6 shadow-md shadow-[#8B5CF6]/30 mx-1"
+          onPress={() => router.push('/ai-input')}
+          style={{
+            shadowColor: '#8B5CF6',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 4,
+          }}
+          className="bg-[#8B5CF6] w-14 h-14 rounded-full flex-col items-center justify-center -mt-6 mx-1"
         >
           <AntDesign name="plus" size={24} color="#fff" />
         </Pressable>

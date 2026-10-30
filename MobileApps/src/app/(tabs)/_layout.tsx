@@ -21,12 +21,6 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analitik',
-        }}
-      />
-      <Tabs.Screen
         name="wallet"
         options={{
           title: 'Dompet',
@@ -35,7 +29,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Saya',
+          title: 'Profil',
         }}
       />
     </Tabs>

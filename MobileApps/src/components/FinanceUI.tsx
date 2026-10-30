@@ -78,7 +78,7 @@ export function DailyBudgetCard({ remaining, total, percentage }: { remaining: s
           <Text className="text-black text-3xl font-['Nunito_800ExtraBold'] tracking-tighter">{remaining}</Text>
         </View>
         <View className="w-10 h-10 rounded-full bg-[#ECFDF3] justify-center items-center">
-          <AntDesign name="checkcircle" size={20} color="#027A48" />
+          <AntDesign name="check-circle" size={20} color="#027A48" />
         </View>
       </View>
 
