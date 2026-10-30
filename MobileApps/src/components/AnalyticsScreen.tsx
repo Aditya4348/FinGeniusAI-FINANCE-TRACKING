@@ -38,7 +38,7 @@ export default function AnalyticsScreen({ embedded = false }: { embedded?: boole
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 110 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 }}
       >
         {/* Main Spending Card */}
         <View 

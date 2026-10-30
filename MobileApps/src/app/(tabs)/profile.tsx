@@ -53,17 +53,6 @@ export default function ProfileScreen() {
           className="bg-[#0369A1] pb-20 px-6 rounded-b-[40px]"
           style={{ paddingTop: Math.max(insets.top + 12, 48) }}
         >
-          <View className="flex-row items-center justify-between mb-6">
-            <Text className="text-white text-[22px] font-['Nunito_800ExtraBold']">
-              Profil
-            </Text>
-            <Pressable
-              onPress={() => router.push("/ProfilePage/MappingAI")}
-              className="w-10 h-10 rounded-full bg-white/20 justify-center items-center"
-            >
-              <Feather name="settings" size={20} color="white" />
-            </Pressable>
-          </View>
 
           {/* Profile Info */}
           <View className="flex-row items-center">
