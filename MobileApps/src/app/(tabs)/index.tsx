@@ -114,7 +114,9 @@ export default function OverviewScreen() {
 
         {/* Cards */}
         <View className="mb-6">
-          <DailyBudgetCard remaining={censor("Rp 45.000")} total={censor("Rp 100.000")} percentage={45} />
+          <Pressable onPress={() => router.push('/ProfilePage/LimitDay')}>
+            <DailyBudgetCard remaining={censor("Rp 45.000")} total={censor("Rp 100.000")} percentage={45} />
+          </Pressable>
           
           <GradientCard 
             balance={censor("Rp 5.827.400")} 

@@ -1,11 +1,12 @@
 import { View, Pressable, Text } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import { AntDesign, Ionicons, FontAwesome5, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function CustomTabBar(props: any) {
+  const { state, descriptors, navigation, emitter, navigateToTab, insets: propInsets } = props;
   const insets = useSafeAreaInsets();
+  const bottomInset = propInsets?.bottom ?? insets.bottom;
 
   const renderTab = (route: any, index: number) => {
     const { options } = descriptors[route.key];
@@ -19,22 +20,45 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
     const isFocused = state.index === index;
 
     const onPress = () => {
-      const event = navigation.emit({
-        type: 'tabPress',
-        target: route.key,
-        canPreventDefault: true,
-      });
+      let event: any = null;
 
-      if (!isFocused && !event.defaultPrevented) {
-        navigation.navigate(route.name, route.params);
+      if (emitter?.emit) {
+        event = emitter.emit({
+          type: 'tabPress',
+          target: route.key,
+          canPreventDefault: true,
+        });
+      } else if (navigation?.emit) {
+        event = navigation.emit({
+          type: 'tabPress',
+          target: route.key,
+          canPreventDefault: true,
+        });
+      }
+
+      if (!isFocused && !event?.defaultPrevented) {
+        if (navigateToTab) {
+          navigateToTab(route.key);
+        } else if (navigation?.navigate) {
+          navigation.navigate(route.name, route.params);
+        } else {
+          router.navigate(`/(tabs)/${route.name}` as any);
+        }
       }
     };
 
     const onLongPress = () => {
-      navigation.emit({
-        type: 'tabLongPress',
-        target: route.key,
-      });
+      if (emitter?.emit) {
+        emitter.emit({
+          type: 'tabLongPress',
+          target: route.key,
+        });
+      } else if (navigation?.emit) {
+        navigation.emit({
+          type: 'tabLongPress',
+          target: route.key,
+        });
+      }
     };
     
     let iconName = '';
@@ -82,7 +106,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
   return (
     <View 
       className="bg-white border-t border-[#E5E5EA] w-full"
-      style={{ paddingBottom: insets.bottom }}
+      style={{ paddingBottom: bottomInset }}
     >
       <View className="flex-row h-[60px] items-center px-1">
         

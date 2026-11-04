@@ -23,28 +23,56 @@ export function Badge({ text, color = '#F2F2F7', textColor = '#000' }: { text: s
 export function GradientCard({ balance, title, onTopUpPress }: { balance: string, title: string, onTopUpPress?: () => void }) {
   return (
     <LinearGradient
-      colors={['#0369A1', '#0284C7']}
+      colors={['#075985', '#0284C7', '#38BDF8']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="rounded-[24px] p-6 mb-4 relative overflow-hidden"
+      style={{ borderRadius: 24, padding: 20, marginBottom: 16, position: 'relative', overflow: 'hidden', shadowColor: '#0284C7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
     >
-      <View className="absolute right-0 top-0 w-32 h-32 rounded-full bg-white/10 -mr-10 -mt-10" />
-      <View className="absolute left-0 bottom-0 w-24 h-24 rounded-full bg-white/10 -ml-10 -mb-10" />
+      <View className="absolute right-0 top-0 w-36 h-36 rounded-full bg-white/10 -mr-12 -mt-14" />
+      <View className="absolute left-0 bottom-0 w-28 h-28 rounded-full bg-white/10 -ml-12 -mb-14" />
+      <View className="absolute right-7 top-16 opacity-10">
+        <Feather name="credit-card" size={88} color="white" />
+      </View>
 
-      <Text className="text-white/80 text-sm font-['Nunito_600SemiBold'] mb-1">{title}</Text>
-      <Text className="text-white text-[32px] font-['Nunito_800ExtraBold'] mb-6 tracking-tight">{balance}</Text>
+      <View className="flex-row items-center justify-between mb-5">
+        <View className="flex-row items-center">
+          <View className="w-8 h-8 rounded-full bg-white/20 items-center justify-center mr-2.5">
+            <Feather name="credit-card" size={15} color="white" />
+          </View>
+          <Text className="text-white font-['Nunito_700Bold'] text-sm tracking-wide">{title}</Text>
+        </View>
+        <View className="flex-row items-center rounded-full bg-white/15 border border-white/20 px-3 py-1">
+          <View className="w-1.5 h-1.5 rounded-full bg-[#86EFAC] mr-1.5" />
+          <Text className="text-white text-[10px] font-['Nunito_700Bold'] tracking-wider">AKTIF</Text>
+        </View>
+      </View>
+
+      <Text className="text-white/75 text-xs font-['Nunito_600SemiBold'] mb-1">Total saldo</Text>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        className="text-white text-[32px] font-['Nunito_800ExtraBold'] mb-5 tracking-tight"
+      >
+        {balance}
+      </Text>
 
       <View className="flex-row items-center gap-3">
         <Pressable 
           onPress={onTopUpPress}
-          className="flex-row items-center bg-white/20 px-4 py-2.5 rounded-full"
+          accessibilityRole="button"
+          accessibilityLabel="Isi saldo"
+          className="flex-1 min-h-12 flex-row items-center justify-center bg-white/20 border border-white/25 px-3 py-2.5 rounded-2xl active:opacity-80"
         >
-          <Feather name="plus" size={16} color="white" />
-          <Text className="text-white text-sm font-['Nunito_600SemiBold'] ml-1.5">Isi Saldo</Text>
+          <Feather name="plus-circle" size={17} color="white" />
+          <Text className="text-white text-[13px] font-['Nunito_700Bold'] ml-2">Isi Saldo</Text>
         </Pressable>
-        <Pressable className="flex-row items-center bg-white/20 px-4 py-2.5 rounded-full">
-          <Feather name="arrow-up-right" size={16} color="white" />
-          <Text className="text-white text-sm font-['Nunito_600SemiBold'] ml-1.5">Transfer</Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Transfer"
+          className="flex-1 min-h-12 flex-row items-center justify-center bg-white/10 border border-white/20 px-3 py-2.5 rounded-2xl active:opacity-80"
+        >
+          <Feather name="arrow-up-right" size={17} color="white" />
+          <Text className="text-white text-[13px] font-['Nunito_700Bold'] ml-2">Transfer</Text>
         </Pressable>
       </View>
     </LinearGradient>
@@ -53,17 +81,23 @@ export function GradientCard({ balance, title, onTopUpPress }: { balance: string
 
 export function CapitalCard({ balance, mom }: { balance: string, mom: string }) {
   return (
-    <View className="bg-[#0F172A] rounded-[20px] p-4 flex-row items-center mb-8">
-      <View className="w-10 h-10 rounded-full bg-white/10 justify-center items-center mr-4">
-        <View className="w-5 h-5 rounded-full bg-white" />
+    <View 
+      style={{ borderRadius: 24 }}
+      className="bg-[#0F172A] rounded-[24px] p-4 flex-row items-center mb-6 border border-[#1E293B] shadow-md shadow-slate-900/10"
+    >
+      <View className="w-10 h-10 rounded-full bg-white/10 justify-center items-center mr-3.5">
+        <Feather name="pie-chart" size={18} color="#38BDF8" />
       </View>
       <View className="flex-1">
-        <Text className="text-white/60 text-[13px] font-['Nunito_600SemiBold']">Total Aset</Text>
-        <Text className="text-white text-lg font-['Nunito_700Bold']">{balance}</Text>
+        <Text className="text-white/60 text-[12px] font-['Nunito_600SemiBold']">Total Aset</Text>
+        <Text className="text-white text-[17px] font-['Nunito_700Bold'] mt-0.5">{balance}</Text>
       </View>
       <View className="items-end">
-        <Text className="text-white/60 text-[13px] font-['Nunito_600SemiBold']">Pertumbuhan</Text>
-        <Text className="text-[#34C759] text-[15px] font-['Nunito_700Bold']">{mom}</Text>
+        <Text className="text-white/60 text-[12px] font-['Nunito_600SemiBold']">Pertumbuhan</Text>
+        <View className="flex-row items-center mt-0.5">
+          <Feather name="trending-up" size={14} color="#34C759" className="mr-1" />
+          <Text className="text-[#34C759] text-[14px] font-['Nunito_700Bold']">{mom}</Text>
+        </View>
       </View>
     </View>
   );
@@ -71,29 +105,32 @@ export function CapitalCard({ balance, mom }: { balance: string, mom: string }) 
 
 export function DailyBudgetCard({ remaining, total, percentage }: { remaining: string, total: string, percentage: number }) {
   return (
-    <View className="bg-white rounded-3xl p-6 border border-[#E5E5EA] shadow-sm elevation-sm mb-5">
-      <View className="flex-row justify-between items-start mb-6">
+    <View 
+      style={{ borderRadius: 24 }}
+      className="bg-white rounded-[24px] p-5 border border-[#E2E8F0] shadow-sm mb-4"
+    >
+      <View className="flex-row justify-between items-start mb-4">
         <View>
-          <Text className="text-[#8E8E93] text-sm font-['Nunito_600SemiBold'] mb-1">Sisa Jatah Harian</Text>
-          <Text className="text-black text-3xl font-['Nunito_800ExtraBold'] tracking-tighter">{remaining}</Text>
+          <Text className="text-[#64748B] text-xs font-['Nunito_600SemiBold'] mb-1">Sisa Jatah Harian</Text>
+          <Text className="text-[#0F172A] text-[28px] font-['Nunito_800ExtraBold'] tracking-tight">{remaining}</Text>
         </View>
-        <View className="w-10 h-10 rounded-full bg-[#ECFDF3] justify-center items-center">
-          <AntDesign name="check-circle" size={20} color="#027A48" />
+        <View className="w-9 h-9 rounded-full bg-[#ECFDF3] justify-center items-center">
+          <AntDesign name="check-circle" size={18} color="#027A48" />
         </View>
       </View>
 
       <View className="mb-2">
-        <View className="h-2 w-full bg-[#F2F2F7] rounded-full overflow-hidden">
+        <View className="h-2 w-full bg-[#F1F5F9] rounded-full overflow-hidden">
           <View 
             className="h-full bg-[#027A48] rounded-full" 
-            style={{ width: `${percentage}%` }}
+            style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
           />
         </View>
       </View>
       
-      <View className="flex-row justify-between items-center">
-        <Text className="text-[#8E8E93] text-xs font-['Nunito_600SemiBold']">{percentage}% aman</Text>
-        <Text className="text-[#8E8E93] text-xs font-['Nunito_600SemiBold']">dari {total}</Text>
+      <View className="flex-row justify-between items-center pt-1">
+        <Text className="text-[#64748B] text-xs font-['Nunito_600SemiBold']">{percentage}% aman</Text>
+        <Text className="text-[#64748B] text-xs font-['Nunito_600SemiBold']">dari {total}</Text>
       </View>
     </View>
   );
