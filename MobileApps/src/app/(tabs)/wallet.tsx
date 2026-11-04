@@ -384,9 +384,14 @@ export default function WalletScreen() {
               colors={["#0369A1", "#0284C7"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              className="rounded-2xl h-[52px] items-center justify-center"
+              style={{
+                borderRadius: 16, // rounded-2xl (1rem = 16px)
+                height: 52, // h-[52px]
+                alignItems: "center", // items-center
+                justifyContent: "center", // justify-center
+              }}
             >
-              <Text className="text-white text-[16px] font-['Nunito_800ExtraBold']">
+              <Text className="text-white text-[16px] font-['Nunito_800ExtraBold'] rounded-xl">
                 Simpan Rekening
               </Text>
             </LinearGradient>

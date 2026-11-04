@@ -89,7 +89,11 @@ export default function OverviewScreen() {
 
   return (
     <View className="flex-1 bg-[#F9FAFB]">
-      <ScrollView className="flex-1" contentContainerClassName="p-6 pt-[60px]">
+      <ScrollView 
+      className="flex-1" 
+      contentContainerClassName="p-6 pt-[60px]"
+      contentContainerStyle={{ paddingHorizontal: 24, gap: 10, paddingVertical: 1, }}
+      >
         {/* Header */}
         <View className="flex-row justify-between items-center mb-8">
           <Pressable onPress={() => router.push('/profile')} className="flex-row items-center">
