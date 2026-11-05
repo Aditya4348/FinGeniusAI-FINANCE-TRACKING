@@ -26,46 +26,54 @@ Fokus: Menyiapkan struktur tabel dan mengeksekusi skema ke PostgreSQL.
   - [x] Ekspor seluruh model di `app/models/__init__.py`.
   - [x] Hubungkan metadata model ke `alembic/env.py`.
 
-- [ ] **1.2. Eksekusi Migrasi Database (Alembic)**:
-  - [ ] Jalankan generator migrasi:
+- [x] **1.2. Eksekusi Migrasi Database (Alembic)**:
+  - [x] Jalankan generator migrasi:
     ```bash
     alembic revision --autogenerate -m "create initial tables"
     ```
-  - [ ] Jalankan migrasi ke PostgreSQL:
+  - [x] Jalankan migrasi ke PostgreSQL:
     ```bash
     alembic upgrade head
     ```
-  - [ ] Buat file script seeder awal (`app/db/seed.py`) untuk mengisi kategori bawaan sistem (*Makanan, Transportasi, Gaji, dll*).
+  - [x] Buat file script seeder awal (`app/db/seed.py`) untuk mengisi kategori bawaan sistem (*Makanan, Transportasi, Gaji, dll*).
 
 ---
 
 ## 📦 FASE 2: Skema Validasi Data (Pydantic Schemas / DTO)
 Fokus: Menentukan format JSON data masuk (Request) dan data keluar (Response) untuk MobileApps.
 
-- [ ] **2.1. Schemas User (`app/schemas/user.py`)**:
+- [x] **2.1. Schemas User (`app/schemas/user.py`)**:
   - `UserRegister`: email, password, name, username.
   - `UserLogin`: email, password.
   - `UserUpdateProfile`: job, payday, currency, balance_format, avatar_url.
+  - `UserChangePassword`: current_password, new_password.
   - `UserResponse`: Data profil publik (tanpa `hashed_password`).
-  - `TokenResponse`: `access_token`, `token_type`.
+  - `TokenResponse`: `access_token`, `token_type`, `user`.
 
-- [ ] **2.2. Schemas Wallet (`app/schemas/wallet.py`)**:
+- [x] **2.2. Schemas Wallet (`app/schemas/wallet.py`)**:
   - `WalletCreate`: name, type, balance, account_number, icon, color_primary, color_secondary.
   - `WalletUpdate`: name, balance, icon, dll.
-  - `WalletResponse`: Data dompet lengkap.
+  - `WalletTopUp` & `WalletTransfer`: nominal dan catatan transfer.
+  - `WalletResponse` & `WalletSummaryResponse`: Data dompet lengkap & akumulasi total aset.
 
-- [ ] **2.3. Schemas Category (`app/schemas/category.py`)**:
+- [x] **2.3. Schemas Category (`app/schemas/category.py`)**:
   - `CategoryCreate`: name, type, icon, color, bg_color.
-  - `CategoryResponse`: id, name, type, icon, color, bg_color, is_locked.
+  - `CategoryUpdate`: name, icon, color, bg_color.
+  - `CategoryResponse`: id, name, type, icon, color, bg_color, is_locked, is_system_default.
 
-- [ ] **2.4. Schemas Transaction (`app/schemas/transaction.py`)**:
-  - `TransactionCreate`: wallet_id, category_id, amount, type, title, note, transaction_date.
-  - `TransactionFilter`: filter tanggal, category, wallet, atau tipe transaksi.
-  - `TransactionResponse`: Data transaksi beserta rincian nama dompet & kategori.
+- [x] **2.4. Schemas Transaction (`app/schemas/transaction.py`)**:
+  - `TransactionCreate`: wallet_id, category_id, amount, type, title, note, transaction_date, source.
+  - `TransactionUpdate`: perbarui field transaksi.
+  - `TransactionFilter`: filter tanggal, category, wallet, tipe transaksi, pagination.
+  - `TransactionResponse`: Data transaksi beserta rincian display dompet & kategori.
+  - `TransactionSummaryResponse`: Statistik cash flow (total income, expense, net).
 
-- [ ] **2.5. Schemas Budget & AI (`app/schemas/budget.py` & `app/schemas/ai.py`)**:
-  - `DailyBudgetResponse`: limit harian, nominal terpakai hari ini, sisa nominal, persentase pemakaian.
-  - `AIReceiptScanResponse`: hasil ekstraksi AI (total amount, category_id saran, merchant name).
+- [x] **2.5. Schemas Budget & AI (`app/schemas/budget.py` & `app/schemas/ai.py`)**:
+  - `BudgetSettingBase` & `BudgetSettingUpdate`: konfigurasi saklar & nominal limit harian.
+  - `DailyBudgetStatusResponse`: limit harian, nominal terpakai hari ini, sisa nominal, persentase pemakaian, status safe/warning/overbudget, sisa hari menuju payday.
+  - `AITextParseRequest` & `AITextParseResponse`: parsing teks natural language.
+  - `AIReceiptScanResponse`: hasil ekstraksi OCR AI struk (merchant, items, amount, saran kategori).
+  - `AIMappingRuleCreate`, `Update`, & `Response`: kamus pemetaan kata kunci AI.
 
 ---
 

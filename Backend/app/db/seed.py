@@ -16,7 +16,7 @@ Cara menjalankan:
 import sys
 from decimal import Decimal
 from datetime import datetime
-from app.helpers import helpers
+from app.core import security
 
 from app.core.database import SessionLocal, engine, Base
 from app.models.user import User
@@ -155,7 +155,7 @@ def seed_demo_user(db, category_map: dict[str, Category]):
     # 1. Buat User Demo
     user = User(
         email=demo_email,
-        hashed_password=helpers.password_hash("Password123"),
+        hashed_password=security.password_hash("Password123"),
         name="Aditya Alfitodinova",
         username="aditya.alfitodinova",
         phone="081288889999",
