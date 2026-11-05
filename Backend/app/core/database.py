@@ -41,9 +41,13 @@ def get_db():
 
 # buat fungsi untuk test koneksi database
 def test_connection():
-    with engine.connect() as connection:
-        connection.execute(text("SELECT 1"))
-    print("Koneksi database berhasil!")
-        
+    try:
+        with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+        print("Koneksi database berhasil!")
+    except Exception as e:
+        print(f"Koneksi database Gagal: {e}")
+
 if __name__ == "__main__":
+    
     test_connection()

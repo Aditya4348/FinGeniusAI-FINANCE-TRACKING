@@ -1,2 +1,15 @@
-# app/models
-# Berkas ini menandai direktori models sebagai paket Python dan tempat mengekspor semua model SQLAlchemy.
+from app.models.user import User
+from app.models.wallet import Wallet
+from app.models.category import Category
+from app.models.transaction import Transaction
+from app.models.budget import BudgetSetting
+from app.models.ai_mapping import AIMappingRule
+
+__all__ = [
+    "User",
+    "Wallet",
+    "Category",
+    "Transaction",
+    "BudgetSetting",
+    "AIMappingRule",
+]
