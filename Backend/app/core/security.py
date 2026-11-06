@@ -1,52 +1,57 @@
 from datetime import datetime, timedelta, timezone
-
+from typing import Any
 import bcrypt
 import jwt
 from pydantic import BaseModel
 
+from app.core.config import settings
+from app.schemas.user import TokenPayload
 
-# Definisi payload Token
-class TokenPayload(BaseModel):
-    user_id: str
-    exp: int  # Expiration time in seconds since epoch
-    iat: int  # Issued at time in seconds since epoch
 
-# Helper untuk hashing password dengan bcrypt
-def password_hash(password: str) -> str:
-    """
-    Fungsi untuk melakukan hashing password menggunakan bcrypt.
-    """
+def hash_password(password: str) -> str:
+    """Melakukan hashing password menggunakan bcrypt."""
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
-# Helper untuk memverifikasi password yang di-hash
+
+# Alias untuk fleksibilitas penamaan
+password_hash = hash_password
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Fungsi untuk memverifikasi password yang di-hash menggunakan bcrypt.
-    """
+    """Memverifikasi plain password dengan hashed password."""
     return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
 
 
-# Helper untuk Membuat token akses (misalnya JWT) dan memverifikasinya
 def create_access_token(
-    user_id: str,
-    secret_key: str,
-    expires_delta_minutes: int = 15,
-    algorithm: str = "HS256",
+    subject: str | Any,
+    expires_delta: timedelta | None = None,
 ) -> str:
-    """Create a JWT access token with UTC-based issue and expiration times."""
-    if not user_id.strip():
-        raise ValueError("user_id must not be empty")
-    if not secret_key.strip():
-        raise ValueError("secret_key must not be empty")
-    if expires_delta_minutes <= 0:
-        raise ValueError("expires_delta_minutes must be greater than zero")
-
+    """Membuat JWT access token dengan subject (user_id) dan expiration UTC."""
     issued_at = datetime.now(timezone.utc)
-    payload = TokenPayload(
-        user_id=user_id,
-        exp=int((issued_at + timedelta(minutes=expires_delta_minutes)).timestamp()),
-        iat=int(issued_at.timestamp()),
-    )
 
-    return jwt.encode(payload.model_dump(), secret_key, algorithm=algorithm)
+    if expires_delta:
+        expire = issued_at + expires_delta
+    else:
+        expire = issued_at + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    payload = {
+        "sub": str(subject),
+        "iat": int(issued_at.timestamp()),
+        "exp": int(expire.timestamp()),
+    }
+
+    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.ALGORITHM)
+
+
+def verify_token(token: str) -> TokenPayload:
+    """Memverifikasi dan mendecode JWT token."""
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+        return TokenPayload(**payload)
+    except jwt.PyJWTError:
+        raise ValueError("Invalid or expired token")

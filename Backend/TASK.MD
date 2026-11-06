@@ -80,13 +80,13 @@ Fokus: Menentukan format JSON data masuk (Request) dan data keluar (Response) un
 ## 🔐 FASE 3: Keamanan & Autentikasi (JWT & Bcrypt)
 Fokus: Login aman, enkripsi password, dan proteksi endpoint.
 
-- [ ] **3.1. Security Utility (`app/core/security.py`)**:
+- [x] **3.1. Security Utility (`app/core/security.py`)**:
   - Fungsi `hash_password(password: str) -> str`.
   - Fungsi `verify_password(plain_password: str, hashed_password: str) -> bool`.
   - Fungsi `create_access_token(data: dict, expires_delta: timedelta | None) -> str`.
   - Fungsi `verify_token(token: str) -> dict`.
 
-- [ ] **3.2. Authentication Dependency (`app/api/deps.py`)**:
+- [x] **3.2. Authentication Dependency (`app/api/deps.py`)**:
   - Fungsi `get_current_user`: Membaca header `Authorization: Bearer <token>`, memvalidasi token, dan mengambil data user aktif dari DB.
 
 ---
@@ -94,7 +94,7 @@ Fokus: Login aman, enkripsi password, dan proteksi endpoint.
 ## 🧠 FASE 4: Business Logic (Service Layer)
 Fokus: Logika hitungan finansial dan komunikasi dengan Gemini AI.
 
-- [ ] **4.1. `AuthService` (`app/service/auth_service.py`)**:
+- [x] **4.1. `AuthService` (`app/service/auth_service.py`)**:
   - Validasi email kembar saat register.
   - Verifikasi password saat login dan cetak JWT.
 
@@ -120,10 +120,12 @@ Fokus: Logika hitungan finansial dan komunikasi dengan Gemini AI.
 ## 🌐 FASE 5: Pembuatan Endpoint HTTP (API Routers v1)
 Fokus: Menyediakan URL API yang dapat diakses oleh MobileApps.
 
-- [ ] **5.1. Router Auth**:
-  - `POST /api/v1/auth/register`
-  - `POST /api/v1/auth/login`
-  - `GET /api/v1/auth/me`
+- [x] **5.1. Router Auth (`app/api/v1/auth/router.py`)**:
+  - `POST /api/v1/auth/register` (Daftar & langsung login mengembalikan TokenResponse)
+  - `POST /api/v1/auth/login` (Login & mengembalikan TokenResponse)
+  - `GET /api/v1/auth/me` (Ambil profil pengguna aktif dengan CurrentUser)
+  - `PUT /api/v1/auth/me` (Update profil pengguna)
+  - `PUT /api/v1/auth/change-password` (Ganti password)
 
 - [ ] **5.2. Router Wallets**:
   - `GET /api/v1/wallets`

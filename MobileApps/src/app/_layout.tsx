@@ -11,11 +11,24 @@ import {
   Nunito_800ExtraBold 
 } from '@expo-google-fonts/nunito';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import "../global.css";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+import "../global.css";
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { AuthProvider } from '@/context/AuthContext';
+import { TOKEN_STORAGE_KEY } from '@/services/api';
 
 SplashScreen.preventAutoHideAsync();
+
+// Instance QueryClient terpusat untuk TanStack React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -33,17 +46,26 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!loaded && !error) return;
-    // Cek apakah onboarding sudah pernah dilakukan
-    const checkOnboarding = async () => {
+
+    // Cek status sesi login dan onboarding saat aplikasi terbuka
+    const checkInitialRoute = async () => {
       await SplashScreen.hideAsync();
+      const token = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
       const done = await AsyncStorage.getItem('onboarding_done');
-      if (done === 'true') {
+
+      if (token) {
+        // Pengguna sudah login -> langsung arahkan ke Dashboard
+        router.replace('/(tabs)');
+      } else if (done === 'true') {
+        // Sudah onboarding -> ke halaman Login
         router.replace('/login');
       } else {
+        // Pertama kali buka aplikasi -> ke Onboarding
         router.replace('/onboarding');
       }
     };
-    checkOnboarding();
+
+    checkInitialRoute();
   }, [loaded, error]);
 
   if (!loaded && !error) {
@@ -51,15 +73,19 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
-        <Stack.Screen name="login" options={{ animation: 'fade' }} />
-        <Stack.Screen name="Register" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="ai-input" options={{ presentation: 'transparentModal', animation: 'fade' }} />
-      </Stack>
-    </ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <AnimatedSplashOverlay />
+          <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+            <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+            <Stack.Screen name="login" options={{ animation: 'fade' }} />
+            <Stack.Screen name="Register" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="ai-input" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+          </Stack>
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
