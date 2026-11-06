@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Image, Pressable, Alert } from "react-native";
+import { View, Text, ScrollView, Image, Pressable, Alert, RefreshControl } from "react-native";
 import {
   Feather,
   Ionicons,
@@ -10,11 +10,28 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refetchUser } = useAuth();
+  const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+      ]);
+    } catch (err) {
+      console.warn('Gagal me-refresh data profil:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient]);
 
   const [profileData, setProfileData] = useState({
     name: "ADITYA ALFITODINOVA",
@@ -130,6 +147,14 @@ export default function ProfileScreen() {
         className="flex-1"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 20 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#ffffff"
+          />
+        }
       >
         {/* Header Blue Background */}
         <View

@@ -1,13 +1,18 @@
-import { View, Text, ScrollView, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function MappingAIScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { refetchUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
 
   // State
   const [mappings, setMappings] = useState<any[]>([]);
@@ -20,11 +25,7 @@ export default function MappingAIScreen() {
   const [formCategoryId, setFormCategoryId] = useState('');
   const [formCategoryType, setFormCategoryType] = useState<'expense'|'income'>('expense');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const storedMappings = await AsyncStorage.getItem('mapping_rules');
       if (storedMappings) setMappings(JSON.parse(storedMappings));
@@ -37,7 +38,26 @@ export default function MappingAIScreen() {
     } catch (e) {
       console.log('Failed to load data', e);
     }
-  };
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+        loadData(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh mapping AI:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient, loadData]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const saveMappings = async (newMappings: any[]) => {
     try {
@@ -95,7 +115,18 @@ export default function MappingAIScreen() {
         <Text className="text-[22px] font-['Nunito_800ExtraBold'] text-[#0F172A] tracking-tight">Kamus Mapping AI</Text>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
+      >
         
         {/* EXPLAINER */}
         <View className="px-6 mt-4">

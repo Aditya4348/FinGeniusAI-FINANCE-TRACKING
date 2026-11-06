@@ -7,14 +7,17 @@ import {
   TextInput,
   Alert,
   StyleSheet,
+  RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRupiahInput } from "@/hooks/useRupiahInput";
+import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const INITIAL_WALLETS = [
   {
@@ -61,8 +64,11 @@ const INITIAL_WALLETS = [
 
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
+  const { refetchUser } = useAuth();
+  const queryClient = useQueryClient();
   const [wallets, setWallets] = useState(INITIAL_WALLETS);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Form State
   const [name, setName] = useState("");
@@ -70,11 +76,7 @@ export default function WalletScreen() {
   const balanceInput = useRupiahInput("");
   const [number, setNumber] = useState("");
 
-  useEffect(() => {
-    loadWallets();
-  }, []);
-
-  const loadWallets = async () => {
+  const loadWallets = useCallback(async () => {
     try {
       const stored = await AsyncStorage.getItem("user_wallets");
       if (stored) {
@@ -83,7 +85,26 @@ export default function WalletScreen() {
     } catch (e) {
       console.log("Failed to load wallets");
     }
-  };
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+        loadWallets(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh dompet:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient, loadWallets]);
+
+  useEffect(() => {
+    loadWallets();
+  }, [loadWallets]);
 
   const saveWallets = async (newWallets: any) => {
     try {
@@ -184,6 +205,14 @@ export default function WalletScreen() {
           paddingTop: 16,
           paddingBottom: 16,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
       >
         {/* Total Assets Card */}
         <View

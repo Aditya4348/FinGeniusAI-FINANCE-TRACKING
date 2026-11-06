@@ -8,6 +8,7 @@ import {
   TextInput,
   Alert,
   StyleSheet,
+  RefreshControl,
 } from "react-native";
 import {
   GradientCard,
@@ -23,14 +24,17 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRupiahInput } from "@/hooks/useRupiahInput";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const DEFAULT_AVATAR_URI = "https://i.pravatar.cc/150?img=11";
 
 export default function OverviewScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refetchUser } = useAuth();
+  const queryClient = useQueryClient();
 
   const [isCensored, setIsCensored] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [avatarUri, setAvatarUri] = useState(
     user?.avatar_url || DEFAULT_AVATAR_URI,
   );
@@ -158,6 +162,21 @@ export default function OverviewScreen() {
   const censorTx = (val: string) =>
     isCensored ? (val.startsWith("-") ? "-Rp ***" : "+Rp ***") : val;
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+        loadWallets(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh beranda:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient, loadWallets]);
+
   return (
     <View className="flex-1 bg-[#F9FAFB]">
       <ScrollView
@@ -168,6 +187,14 @@ export default function OverviewScreen() {
           gap: 10,
           paddingVertical: 1,
         }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
       >
         {/* Header */}
         <View className="flex-row justify-between items-center mb-8">

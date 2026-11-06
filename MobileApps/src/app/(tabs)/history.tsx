@@ -1,8 +1,10 @@
-import { View, Text, ScrollView, Pressable, FlatList } from "react-native";
+import { View, Text, ScrollView, Pressable, FlatList, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import AnalyticsScreen from "@/components/AnalyticsScreen";
+import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 type HistoryTab = "riwayat" | "analisis";
 
@@ -78,8 +80,25 @@ const TRANSACTIONS = [
 
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
+  const { refetchUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<HistoryTab>("riwayat");
   const [filter, setFilter] = useState<"semua" | "masuk" | "keluar">("semua");
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh riwayat:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient]);
 
   const filteredData = TRANSACTIONS.filter((t) => {
     if (filter === "semua") return true;
@@ -276,6 +295,14 @@ export default function HistoryScreen() {
               paddingBottom: 10,
             }}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#0284C7']}
+                tintColor="#0284C7"
+              />
+            }
           />
         </>
       ) : (

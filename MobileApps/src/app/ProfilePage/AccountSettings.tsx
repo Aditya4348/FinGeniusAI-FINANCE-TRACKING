@@ -1,10 +1,11 @@
-import { View, Text, ScrollView, Pressable, Switch, Image, TextInput, Modal, Alert, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch, Image, TextInput, Modal, Alert, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 import { UserUpdateProfile } from '@/types/auth';
 import { isAxiosError } from 'axios';
 
@@ -54,13 +55,29 @@ const BALANCE_FORMAT_OPTIONS = [
 export default function AccountSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, updateProfile, logout, deleteAccount } = useAuth(); // Ambil data user & fungsi update dari AuthContext
+  const { user, updateProfile, logout, deleteAccount, refetchUser } = useAuth(); // Ambil data user & fungsi update dari AuthContext
+  const queryClient = useQueryClient();
 
   // Settings State
   const [settings, setSettings] = useState<UserAccountSettings>(DEFAULT_SETTINGS);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+      ]);
+    } catch (err) {
+      console.warn('Gagal me-refresh akun:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient]);
 
   // Edit Modal State
   const [modalType, setModalType] = useState<
@@ -301,6 +318,14 @@ export default function AccountSettingsScreen() {
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 60 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
       >
         
         {/* Avatar Profile Card */}
@@ -373,7 +398,7 @@ export default function AccountSettingsScreen() {
 
           {/* Username */}
           <Pressable 
-            onPress={() => openEdit('username', user?.username || settings.username || '')}
+            onPress={() => openEdit('username', user?.username || '')}
             className="flex-row items-center justify-between py-3.5 border-b border-[#F2F2F7]"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -382,7 +407,7 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Username</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">@{user?.username || settings.username}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">@{user?.username}</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={18} color="#C7C7CC" />

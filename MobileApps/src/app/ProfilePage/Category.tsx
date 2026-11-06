@@ -1,9 +1,11 @@
-import { View, Text, ScrollView, Pressable, Switch, Platform, UIManager, Modal, TextInput, KeyboardAvoidingView } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch, Platform, UIManager, Modal, TextInput, KeyboardAvoidingView, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Enable LayoutAnimation on Android (Old Architecture only)
 if (Platform.OS === 'android' && !(global as any)?._IS_FABRIC && !((global as any)?.nativeFabricUIManager)) {
@@ -47,6 +49,9 @@ const COLOR_OPTIONS = [
 export default function CategoryScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { refetchUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [aiAutoCreate, setAiAutoCreate] = useState(true);
@@ -64,11 +69,7 @@ export default function CategoryScreen() {
   const [formIcon, setFormIcon] = useState(ICON_OPTIONS[0]);
   const [formColor, setFormColor] = useState(COLOR_OPTIONS[0]);
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const storedExpense = await AsyncStorage.getItem('expense_categories');
       const storedIncome = await AsyncStorage.getItem('income_categories');
@@ -78,7 +79,26 @@ export default function CategoryScreen() {
     } catch (e) {
       console.log('Failed to load categories', e);
     }
-  };
+  }, []);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+        loadCategories(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh kategori:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient, loadCategories]);
+
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
 
   const saveCategories = async (expense: any, income: any) => {
     try {
@@ -210,7 +230,18 @@ export default function CategoryScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
+      >
         
         {/* List Data Category */}
         <View className="px-6 mt-4">

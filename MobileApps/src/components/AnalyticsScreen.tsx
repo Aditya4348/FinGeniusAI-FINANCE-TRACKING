@@ -1,8 +1,10 @@
-import { View, Text, ScrollView, Pressable, Modal, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, Modal, StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { BlurView } from 'expo-blur';
+import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Data Dummy
 const SPENDING_DATA = [
@@ -17,8 +19,25 @@ const PERIOD_OPTIONS = ['Bulan Ini', 'Bulan Lalu', '3 Bulan Terakhir', 'Tahun In
 
 export default function AnalyticsScreen({ embedded = false }: { embedded?: boolean }) {
   const insets = useSafeAreaInsets();
+  const { refetchUser } = useAuth();
+  const queryClient = useQueryClient();
   const [period, setPeriod] = useState('Bulan Ini');
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh analitik:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: '#EEF3F9', paddingTop: embedded ? 0 : insets.top }}>
@@ -39,6 +58,14 @@ export default function AnalyticsScreen({ embedded = false }: { embedded?: boole
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
       >
         {/* Main Spending Card */}
         <View 

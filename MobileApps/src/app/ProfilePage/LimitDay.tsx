@@ -1,14 +1,19 @@
-import { View, Text, ScrollView, Pressable, Switch, TextInput } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch, TextInput, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRupiahInput } from '@/hooks/useRupiahInput';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '@/context/AuthContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function LimitDayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { refetchUser } = useAuth();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   
   // State Prototype
   const [isLimitEnabled, setIsLimitEnabled] = useState(true);
@@ -18,6 +23,20 @@ export default function LimitDayScreen() {
   const [warnAt80, setWarnAt80] = useState(true);
   const [warnAt100, setWarnAt100] = useState(true);
   const [strictMode, setStrictMode] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchUser(),
+        queryClient.invalidateQueries(),
+      ]);
+    } catch (err) {
+      console.warn("Gagal me-refresh batas harian:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchUser, queryClient]);
 
   // Simulasi Visual Progress (Untuk UI Prototype)
   const simulatedUsed = 75000;
@@ -46,6 +65,14 @@ export default function LimitDayScreen() {
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#0284C7']}
+            tintColor="#0284C7"
+          />
+        }
       >
         
         {/* Master Toggle Card */}
