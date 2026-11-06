@@ -42,14 +42,28 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Callback saat sesi pengguna berakhir (401 Unauthorized)
+type UnauthorizedCallback = () => void;
+let onUnauthorizedCallback: UnauthorizedCallback | null = null;
+
+export const setOnUnauthorizedCallback = (callback: UnauthorizedCallback | null) => {
+  onUnauthorizedCallback = callback;
+};
+
 // Response Interceptor: Menangani format error dari FastAPI (error.response.data.detail)
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<{ detail?: string | any[] }>) => {
     if (error.response) {
-      // 401 Unauthorized: Sesi habis / token tidak valid
+      // 401 Unauthorized: Sesi habis / token tidak valid (kecuali saat proses login gagal)
       if (error.response.status === 401) {
-        await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+        const isLoginRequest = error.config?.url?.includes('/auth/login');
+        if (!isLoginRequest) {
+          await AsyncStorage.removeItem(TOKEN_STORAGE_KEY);
+          if (onUnauthorizedCallback) {
+            onUnauthorizedCallback();
+          }
+        }
       }
 
       // Ambil pesan error ramah dari backend FastAPI

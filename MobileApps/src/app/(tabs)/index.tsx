@@ -16,16 +16,24 @@ import {
   DailyBudgetCard,
 } from "@/components/FinanceUI";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState, useEffect } from "react";
+import { useRouter, useFocusEffect } from "expo-router";
+import { useState, useEffect, useCallback } from "react";
 import { BlurView } from "expo-blur";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRupiahInput } from "@/hooks/useRupiahInput";
 import { LinearGradient } from "expo-linear-gradient";
+import { useAuth } from "@/context/AuthContext";
+
+const DEFAULT_AVATAR_URI = "https://i.pravatar.cc/150?img=11";
 
 export default function OverviewScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+
   const [isCensored, setIsCensored] = useState(false);
+  const [avatarUri, setAvatarUri] = useState(
+    user?.avatar_url || DEFAULT_AVATAR_URI,
+  );
 
   // Top Up Modal State
   const [isTopUpModalVisible, setIsTopUpModalVisible] = useState(false);
@@ -33,6 +41,48 @@ export default function OverviewScreen() {
   const [topUpNote, setTopUpNote] = useState("");
   const [selectedWalletId, setSelectedWalletId] = useState("");
   const [wallets, setWallets] = useState<any[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const loadAvatar = async () => {
+        try {
+          const stored = await AsyncStorage.getItem("user_account_settings");
+          let storedAvatarUri: string | null = null;
+
+          if (stored) {
+            const settings: unknown = JSON.parse(stored);
+            if (
+              typeof settings === "object" &&
+              settings !== null &&
+              "avatarUri" in settings &&
+              typeof settings.avatarUri === "string" &&
+              settings.avatarUri.trim()
+            ) {
+              storedAvatarUri = settings.avatarUri;
+            }
+          }
+
+          if (isActive) {
+            setAvatarUri(
+              storedAvatarUri || user?.avatar_url || DEFAULT_AVATAR_URI,
+            );
+          }
+        } catch (error) {
+          console.warn("Gagal memuat foto profil:", error);
+          if (isActive) {
+            setAvatarUri(user?.avatar_url || DEFAULT_AVATAR_URI);
+          }
+        }
+      };
+
+      loadAvatar();
+      return () => {
+        isActive = false;
+      };
+    }, [user?.avatar_url]),
+  );
 
   useEffect(() => {
     // Muat daftar rekening saat modal akan dibuka atau screen dimuat
@@ -127,8 +177,9 @@ export default function OverviewScreen() {
           >
             <View className="w-11 h-11 rounded-full bg-[#F2F2F7] mr-3 overflow-hidden">
               <Image
-                source={{ uri: "https://i.pravatar.cc/150?img=11" }}
+                source={{ uri: avatarUri }}
                 className="w-full h-full"
+                onError={() => setAvatarUri(DEFAULT_AVATAR_URI)}
               />
             </View>
             <View>
@@ -136,7 +187,7 @@ export default function OverviewScreen() {
                 Selamat datang kembali,
               </Text>
               <Text className="text-lg text-black font-['Nunito_700Bold']">
-                Aditya
+                {user?.name}
               </Text>
             </View>
           </Pressable>

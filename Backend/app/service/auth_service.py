@@ -1,10 +1,12 @@
 from fastapi import HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, verify_password, create_access_token
 from app.models.user import User
 from app.models.budget import BudgetSetting
 from app.schemas.user import (
+    DeleteUserRequest,
     UserRegister,
     UserLogin,
     TokenResponse,
@@ -68,12 +70,23 @@ class AuthService:
 
     @staticmethod
     def login(db: Session, credentials: UserLogin) -> TokenResponse:
-        # 1. Cari user berdasarkan email
-        user = db.query(User).filter(User.email == credentials.email).first()
+        # 1. Cari user secara fleksibel berdasarkan email, username, atau nomor telepon
+        ident = (credentials.identifier or credentials.email or "").strip()
+        clean_phone = ident.replace(" ", "").replace("-", "")
+
+        user = db.query(User).filter(
+            or_(
+                User.email == ident.lower(),
+                User.username == ident.lower(),
+                User.phone == ident,
+                User.phone == clean_phone,
+            )
+        ).first()
+
         if not user or not verify_password(credentials.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email atau kata sandi tidak valid",
+                detail="Email, username, nomor HP, atau kata sandi tidak valid",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -124,4 +137,17 @@ class AuthService:
             )
 
         user.hashed_password = hash_password(password_in.new_password)
+        db.commit()
+        
+    @staticmethod
+    def delete_account(db: Session, user: User, payload: DeleteUserRequest) -> None:
+        # Masukan password untuk konfirmasi penghapusan akun
+        if not verify_password(payload.password, user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Kata sandi tidak cocok. Tidak dapat menghapus akun.",
+            )
+        
+        """Menghapus akun pengguna beserta data terkait."""
+        db.delete(user)
         db.commit()

@@ -1,7 +1,7 @@
 import re
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator, model_validator
 
 
 class UserBase(BaseModel):
@@ -42,8 +42,17 @@ class UserRegister(BaseModel):
 
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+    identifier: str | None = Field(None, description="Email, username, atau nomor handphone")
+    email: str | None = Field(None, description="Kompatibilitas input jika form mengirimkan key email")
+    password: str = Field(..., min_length=1, description="Kata sandi pengguna")
+
+    @model_validator(mode="after")
+    def resolve_identifier(self) -> "UserLogin":
+        target = self.identifier or self.email
+        if not target or not target.strip():
+            raise ValueError("Email, username, atau nomor telepon wajib diisi")
+        self.identifier = target.strip()
+        return self
 
 
 class UserUpdateProfile(BaseModel):
@@ -65,6 +74,9 @@ class UserUpdateProfile(BaseModel):
                 raise ValueError("Username hanya boleh mengandung huruf kecil, angka, titik, strip, atau underscore")
         return v
 
+class DeleteUserRequest(BaseModel):
+    password: str = Field(..., min_length=8, max_length=100, description="Kata sandi pengguna untuk konfirmasi penghapusan akun")
+    
 
 class UserChangePassword(BaseModel):
     current_password: str

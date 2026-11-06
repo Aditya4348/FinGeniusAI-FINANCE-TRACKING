@@ -1,9 +1,12 @@
-import { View, Text, ScrollView, Pressable, Switch, Image, TextInput, Modal, Alert, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, ScrollView, Pressable, Switch, Image, TextInput, Modal, Alert, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather, Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '@/context/AuthContext';
+import { UserUpdateProfile } from '@/types/auth';
+import { isAxiosError } from 'axios';
 
 export interface UserAccountSettings {
   name: string;
@@ -44,18 +47,19 @@ const JOB_OPTIONS = [
 ];
 
 const BALANCE_FORMAT_OPTIONS = [
-  'Lengkap (Rp 1.500.000)',
-  'Ringkas (Rp 1,5 Jt)',
-  'Minimalis (1.500.000)',
+  'Lengkap (Tampilkan Saldo)',
+  'Sembunyikan Saldo (Sensor)',
 ];
 
 export default function AccountSettingsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user, updateProfile, logout, deleteAccount } = useAuth(); // Ambil data user & fungsi update dari AuthContext
 
   // Settings State
   const [settings, setSettings] = useState<UserAccountSettings>(DEFAULT_SETTINGS);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Edit Modal State
@@ -63,6 +67,24 @@ export default function AccountSettingsScreen() {
     'name' | 'username' | 'email' | 'phone' | 'job' | 'payday' | 'balanceFormat' | 'avatar' | null
   >(null);
   const [editValue, setEditValue] = useState('');
+
+  // Sinkronisasi data user dari backend ke settings lokal
+  useEffect(() => {
+    if (user) {
+      setSettings((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        username: user.username || prev.username,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        job: user.job || prev.job,
+        payday: user.payday ?? prev.payday,
+        currency: user.currency || prev.currency,
+        avatarUri: user.avatar_url || prev.avatarUri,
+        balanceFormat: user.balance_format ? 'Lengkap (Tampilkan Saldo)' : 'Sembunyikan Saldo (Sensor)',
+      }));
+    }
+  }, [user]);
 
   // Load from Storage
   useEffect(() => {
@@ -73,7 +95,7 @@ export default function AccountSettingsScreen() {
     try {
       const stored = await AsyncStorage.getItem('user_account_settings');
       if (stored) {
-        setSettings(JSON.parse(stored));
+        setSettings((prev) => ({ ...prev, ...JSON.parse(stored) }));
       }
     } catch {
       // fallback to default
@@ -106,8 +128,11 @@ export default function AccountSettingsScreen() {
     setEditValue(currentVal);
   };
 
-  const handleSaveModal = () => {
+  const handleSaveModal = async () => {
     if (!modalType) return;
+
+    let payload: UserUpdateProfile = {};
+    let newSettings = { ...settings };
 
     if (modalType === 'payday') {
       const dayNum = parseInt(editValue, 10);
@@ -115,40 +140,74 @@ export default function AccountSettingsScreen() {
         Alert.alert('Tanggal Tidak Valid', 'Silakan masukkan tanggal antara 1 sampai 31.');
         return;
       }
-      saveSettings({ ...settings, payday: dayNum });
+      payload = { payday: dayNum };
+      newSettings.payday = dayNum;
     } else if (modalType === 'name') {
-      if (!editValue.trim()) {
-        Alert.alert('Perhatian', 'Nama lengkap tidak boleh kosong.');
+      const trimmed = editValue.trim();
+      if (trimmed.length < 2 || trimmed.length > 100) {
+        Alert.alert('Perhatian', 'Nama lengkap harus terdiri dari 2 sampai 100 karakter.');
         return;
       }
-      saveSettings({ ...settings, name: editValue.trim() });
+      payload = { name: trimmed };
+      newSettings.name = trimmed;
     } else if (modalType === 'username') {
-      if (!editValue.trim()) {
-        Alert.alert('Perhatian', 'Username tidak boleh kosong.');
+      const cleanUsername = editValue.trim().toLowerCase().replace(/\s+/g, '');
+      if (cleanUsername.length < 3 || cleanUsername.length > 50) {
+        Alert.alert('Perhatian', 'Username harus terdiri dari 3 sampai 50 karakter.');
         return;
       }
-      saveSettings({ ...settings, username: editValue.trim().toLowerCase().replace(/\s+/g, '') });
+      if (!/^[a-z0-9_.-]+$/.test(cleanUsername)) {
+        Alert.alert('Perhatian', 'Username hanya boleh berisi huruf kecil, angka, titik, strip, atau underscore.');
+        return;
+      }
+      payload = { username: cleanUsername };
+      newSettings.username = cleanUsername;
     } else if (modalType === 'email') {
-      if (!editValue.includes('@')) {
-        Alert.alert('Email Tidak Valid', 'Pastikan format email sudah benar.');
-        return;
-      }
-      saveSettings({ ...settings, email: editValue.trim() });
+      Alert.alert('Email Terkunci', 'Email terdaftar tidak dapat diubah secara langsung demi keamanan akun.');
+      setModalType(null);
+      return;
     } else if (modalType === 'phone') {
-      if (!editValue.trim()) {
-        Alert.alert('Perhatian', 'Nomor handphone tidak boleh kosong.');
-        return;
-      }
-      saveSettings({ ...settings, phone: editValue.trim() });
+      const trimmed = editValue.trim();
+      payload = { phone: trimmed || null };
+      newSettings.phone = trimmed;
     } else if (modalType === 'job') {
-      saveSettings({ ...settings, job: editValue });
+      payload = { job: editValue || null };
+      newSettings.job = editValue;
     } else if (modalType === 'balanceFormat') {
-      saveSettings({ ...settings, balanceFormat: editValue });
+      const isFull = editValue.includes('Lengkap') || editValue.includes('Tampilkan');
+      payload = { balance_format: isFull };
+      newSettings.balanceFormat = editValue;
     } else if (modalType === 'avatar') {
-      saveSettings({ ...settings, avatarUri: editValue });
+      payload = { avatar_url: editValue };
+      newSettings.avatarUri = editValue;
     }
 
-    setModalType(null);
+    try {
+      setIsSubmitting(true);
+      await updateProfile(payload);
+      setSettings(newSettings);
+      await AsyncStorage.setItem('user_account_settings', JSON.stringify(newSettings));
+      showToast('Perubahan berhasil disimpan');
+      setModalType(null);
+    } catch (error: unknown) {
+      if (isAxiosError(error)) {
+        const detail = error.response?.data?.detail;
+        const msg =
+          typeof detail === 'string'
+            ? detail
+            : Array.isArray(detail)
+            ? detail
+                .map((d: any) => (d && typeof d === 'object' && 'msg' in d ? String(d.msg) : null))
+                .filter((m): m is string => m !== null)
+                .join('\n')
+            : 'Gagal memperbarui profil.';
+        Alert.alert('Gagal Memperbarui', msg);
+      } else {
+        Alert.alert('Gagal', 'Terjadi kesalahan sistem saat menyimpan data.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleBackupNow = () => {
@@ -196,24 +255,6 @@ export default function AccountSettingsScreen() {
           style: 'destructive',
           onPress: () => {
             showToast('Semua data transaksi berhasil di-reset');
-          },
-        },
-      ]
-    );
-  };
-
-  const handleDeleteAccount = () => {
-    Alert.alert(
-      'Hapus Akun Permanen?',
-      'Apakah Anda yakin ingin menghapus akun ini secara permanen? Semua data finansial, preferensi, dan akun terhubung akan dihapus dari server kami.',
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus Akun',
-          style: 'destructive',
-          onPress: async () => {
-            await AsyncStorage.clear();
-            router.replace('/login');
           },
         },
       ]
@@ -270,12 +311,12 @@ export default function AccountSettingsScreen() {
           <View className="relative mb-3">
             <View className="w-24 h-24 rounded-full border-4 border-[#EFF6FF] overflow-hidden bg-[#F2F2F7]">
               <Image 
-                source={{ uri: settings.avatarUri }} 
+                source={{ uri: user?.avatar_url || settings.avatarUri }} 
                 className="w-full h-full" 
               />
             </View>
             <Pressable 
-              onPress={() => openEdit('avatar', settings.avatarUri)}
+              onPress={() => openEdit('avatar', user?.avatar_url || settings.avatarUri)}
               className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-[#0284C7] items-center justify-center border-2 border-white"
             >
               <Feather name="camera" size={14} color="white" />
@@ -283,13 +324,13 @@ export default function AccountSettingsScreen() {
           </View>
 
           <Text className="text-[19px] font-['Nunito_800ExtraBold'] text-[#0F172A] tracking-wide text-center">
-            {settings.name}
+            {user?.name || settings.name}
           </Text>
           <Text className="text-[13px] font-['Nunito_600SemiBold'] text-[#64748B] mt-0.5">
-            @{settings.username}
+            @{user?.username || settings.username}
           </Text>
 
-          <View className="flex-row items-center mt-3 gap-2">
+          {/* <View className="flex-row items-center mt-3 gap-2">
             <View className="bg-[#8B5CF6]/10 px-3 py-1 rounded-full border border-[#8B5CF6]/20 flex-row items-center">
               <FontAwesome5 name="crown" size={11} color="#8B5CF6" />
               <Text className="text-[11px] font-['Nunito_800ExtraBold'] text-[#8B5CF6] ml-1.5">MEMBER PRO</Text>
@@ -298,10 +339,10 @@ export default function AccountSettingsScreen() {
               <Ionicons name="checkmark-circle" size={13} color="#10B981" />
               <Text className="text-[11px] font-['Nunito_800ExtraBold'] text-[#059669] ml-1">Terverifikasi</Text>
             </View>
-          </View>
+          </View> */}
 
           <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#94A3B8] mt-3">
-            Bergabung sejak Agustus 2026
+            Bergabung sejak {user?.created_at ? new Date(user.created_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : 'Agustus 2023'}
           </Text>
         </View>
 
@@ -315,7 +356,7 @@ export default function AccountSettingsScreen() {
         >
           {/* Nama Lengkap */}
           <Pressable 
-            onPress={() => openEdit('name', settings.name)}
+            onPress={() => openEdit('name', user?.name || settings.name || '')}
             className="flex-row items-center justify-between py-3.5 border-b border-[#F2F2F7]"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -324,7 +365,7 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Nama Lengkap</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{settings.name}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{user?.name || settings.name}</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={18} color="#C7C7CC" />
@@ -332,7 +373,7 @@ export default function AccountSettingsScreen() {
 
           {/* Username */}
           <Pressable 
-            onPress={() => openEdit('username', settings.username)}
+            onPress={() => openEdit('username', user?.username || settings.username || '')}
             className="flex-row items-center justify-between py-3.5 border-b border-[#F2F2F7]"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -341,7 +382,7 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Username</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">@{settings.username}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">@{user?.username || settings.username}</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={18} color="#C7C7CC" />
@@ -349,7 +390,13 @@ export default function AccountSettingsScreen() {
 
           {/* Email */}
           <Pressable 
-            onPress={() => openEdit('email', settings.email)}
+            onPress={() => {
+              Alert.alert(
+                'Email Akun',
+                'Alamat email terdaftar digunakan sebagai kredensial masuk utama dan tidak dapat diubah.',
+                [{ text: 'Mengerti', style: 'default' }]
+              );
+            }}
             className="flex-row items-center justify-between py-3.5 border-b border-[#F2F2F7]"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -358,15 +405,17 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Email Terdaftar</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5" numberOfLines={1}>{settings.email}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5" numberOfLines={1}>{user?.email || settings.email}</Text>
               </View>
             </View>
-            <Feather name="chevron-right" size={18} color="#C7C7CC" />
+            <View className="bg-gray-100 px-2 py-0.5 rounded-md">
+              <Text className="text-[10px] font-['Nunito_700Bold'] text-gray-500">Terkunci</Text>
+            </View>
           </Pressable>
 
           {/* Nomor Handphone */}
           <Pressable 
-            onPress={() => openEdit('phone', settings.phone)}
+            onPress={() => openEdit('phone', user?.phone || settings.phone || '')}
             className="flex-row items-center justify-between py-3.5 border-b border-[#F2F2F7]"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -375,7 +424,7 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Nomor Handphone</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{settings.phone}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{user?.phone || settings.phone || '-'}</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={18} color="#C7C7CC" />
@@ -383,7 +432,7 @@ export default function AccountSettingsScreen() {
 
           {/* Pekerjaan / Sektor */}
           <Pressable 
-            onPress={() => openEdit('job', settings.job)}
+            onPress={() => openEdit('job', user?.job || settings.job || '')}
             className="flex-row items-center justify-between py-3.5"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -392,7 +441,7 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Bidang Pekerjaan</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{settings.job}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{user?.job || settings.job || 'Belum dipilih'}</Text>
               </View>
             </View>
             <Feather name="chevron-right" size={18} color="#C7C7CC" />
@@ -409,7 +458,7 @@ export default function AccountSettingsScreen() {
         >
           {/* Tanggal Gajian */}
           <Pressable 
-            onPress={() => openEdit('payday', settings.payday.toString())}
+            onPress={() => openEdit('payday', (user?.payday ?? settings.payday ?? 25).toString())}
             className="flex-row items-center justify-between py-3.5 border-b border-[#F2F2F7]"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -419,7 +468,7 @@ export default function AccountSettingsScreen() {
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Tanggal Awal Siklus / Gajian</Text>
                 <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">
-                  Setiap tanggal {settings.payday}
+                  Setiap tanggal {user?.payday ?? settings.payday ?? 25}
                 </Text>
               </View>
             </View>
@@ -437,7 +486,7 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Mata Uang Utama</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{settings.currency}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{user?.currency || 'IDR'}</Text>
               </View>
             </View>
             <View className="bg-gray-100 px-2 py-0.5 rounded-md">
@@ -447,7 +496,7 @@ export default function AccountSettingsScreen() {
 
           {/* Format Saldo */}
           <Pressable 
-            onPress={() => openEdit('balanceFormat', settings.balanceFormat)}
+            onPress={() => openEdit('balanceFormat', (user?.balance_format ?? true) ? 'Lengkap (Tampilkan Saldo)' : 'Sembunyikan Saldo (Sensor)')}
             className="flex-row items-center justify-between py-3.5"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -456,7 +505,9 @@ export default function AccountSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[11px] font-['Nunito_600SemiBold'] text-[#8E8E93]">Format Tampilan Saldo</Text>
-                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">{settings.balanceFormat}</Text>
+                <Text className="text-[14px] font-['Nunito_700Bold'] text-[#0F172A] mt-0.5">
+                  {(user?.balance_format ?? true) ? 'Lengkap (Tampilkan Saldo)' : 'Sembunyikan Saldo (Sensor)'}
+                </Text>
               </View>
             </View>
             <Feather name="chevron-right" size={18} color="#C7C7CC" />
@@ -557,7 +608,7 @@ export default function AccountSettingsScreen() {
 
           {/* Hapus Akun Permanen */}
           <Pressable 
-            onPress={handleDeleteAccount}
+            onPress={() => router.push('/ProfilePage/DeleteAccount')}
             className="flex-row items-center justify-between py-3.5"
           >
             <View className="flex-row items-center flex-1 pr-3">
@@ -760,16 +811,22 @@ export default function AccountSettingsScreen() {
             {/* Modal Actions */}
             <View className="flex-row gap-3">
               <Pressable
-                onPress={() => setModalType(null)}
+                onPress={() => !isSubmitting && setModalType(null)}
+                disabled={isSubmitting}
                 className="flex-1 py-3.5 rounded-2xl bg-[#F1F5F9] items-center justify-center"
               >
                 <Text className="text-[14px] font-['Nunito_700Bold'] text-[#64748B]">Batal</Text>
               </Pressable>
               <Pressable
                 onPress={handleSaveModal}
-                className="flex-1 py-3.5 rounded-2xl bg-[#0284C7] items-center justify-center"
+                disabled={isSubmitting}
+                className="flex-1 py-3.5 rounded-2xl bg-[#0284C7] items-center justify-center flex-row"
+                style={{ opacity: isSubmitting ? 0.7 : 1 }}
               >
-                <Text className="text-[14px] font-['Nunito_800ExtraBold'] text-white">Simpan</Text>
+                {isSubmitting && <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />}
+                <Text className="text-[14px] font-['Nunito_800ExtraBold'] text-white">
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                </Text>
               </Pressable>
             </View>
           </View>

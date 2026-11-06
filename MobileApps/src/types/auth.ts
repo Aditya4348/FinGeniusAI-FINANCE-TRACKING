@@ -17,7 +17,8 @@ export interface UserResponse {
 }
 
 export interface UserLogin {
-  email: string;
+  email?: string;
+  identifier?: string;
   password: string;
 }
 

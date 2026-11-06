@@ -15,6 +15,10 @@ export const authService = {
     return response.data;
   },
 
+  async deleteAccount(payload: { password: string }): Promise<void> {
+    await apiClient.post('/auth/delete-account', payload);
+  },
+
   // Mendaftar akun baru
   async register(payload: UserRegister): Promise<TokenResponse> {
     const response = await apiClient.post<TokenResponse>('/auth/register', payload);

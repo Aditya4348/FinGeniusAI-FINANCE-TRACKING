@@ -12,12 +12,14 @@ import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/AuthContext';
 
 const DUMMY_EMAIL = 'aditya@fingeniusai.com';
 const DUMMY_PASSWORD = 'Password123';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login, isAuthenticating, user } = useAuth(); // Placeholder for future authentication context usage
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,32 +27,33 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = (
-    credentials: { email: string; password: string } = { email, password },
+  const handleLogin = async (
+    credentials: { email?: string; identifier?: string; password: string } = { email, password },
   ) => {
     setError('');
-    if (!credentials.email || !credentials.password) {
-      setError('Email dan kata sandi tidak boleh kosong.');
+    const target = credentials.identifier || credentials.email;
+    if (!target || !credentials.password) {
+      setError('Email, username, atau no. HP dan kata sandi tidak boleh kosong.');
       return;
     }
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (credentials.email === DUMMY_EMAIL && credentials.password === DUMMY_PASSWORD) {
-        router.replace('/(tabs)');
-      } else {
-        setError('Email atau kata sandi salah.');
-      }
-    }, 1200);
+
+    try {
+      await login({
+        identifier: target.trim(),
+        email: target.trim(),
+        password: credentials.password,
+      });
+    } catch (err: any) {
+      setError(err.message || 'Terjadi kesalahan saat masuk. Silakan coba lagi.');
+    } 
   };
 
   const handleQuickLogin = () => {
-    if (isLoading) return;
+    if (isAuthenticating) return;
 
     setEmail(DUMMY_EMAIL);
     setPassword(DUMMY_PASSWORD);
     setIsPasswordVisible(false);
-    handleLogin({ email: DUMMY_EMAIL, password: DUMMY_PASSWORD });
   };
 
   return (
@@ -170,9 +173,8 @@ export default function LoginScreen() {
               <TextInput
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Email atau Nomor HP"
+                placeholder="Email, Username, atau No. HP"
                 placeholderTextColor="#94A3B8"
-                keyboardType="email-address"
                 autoCapitalize="none"
                 style={{ flex: 1, fontSize: 15, fontFamily: 'Nunito_600SemiBold', color: '#0F172A', padding: 0 }}
               />
@@ -206,7 +208,7 @@ export default function LoginScreen() {
             </Pressable>
 
             {/* Tombol Masuk */}
-            <Pressable onPress={() => handleLogin()} disabled={isLoading} style={{ marginBottom: 20, opacity: isLoading ? 0.8 : 1 }}>
+            <Pressable onPress={() => handleLogin()} disabled={isAuthenticating} style={{ marginBottom: 20, opacity: isAuthenticating ? 0.8 : 1 }}>
               <LinearGradient
                 colors={['#1D4ED8', '#0369A1']}
                 start={{ x: 0, y: 0 }}
@@ -214,7 +216,7 @@ export default function LoginScreen() {
                 style={{ borderRadius: 50, height: 54, alignItems: 'center', justifyContent: 'center' }}
               >
                 <Text style={{ color: '#fff', fontSize: 16, fontFamily: 'Nunito_800ExtraBold', letterSpacing: 0.3 }}>
-                  {isLoading ? 'Memverifikasi...' : 'Masuk'}
+                  {isAuthenticating ? 'Memverifikasi...' : 'Masuk'}
                 </Text>
               </LinearGradient>
             </Pressable>
@@ -299,7 +301,7 @@ export default function LoginScreen() {
                   accessibilityRole="button"
                   accessibilityLabel="Masuk dengan akun demo"
                   onPress={handleQuickLogin}
-                  disabled={isLoading}
+                  disabled={isAuthenticating || isLoading}
                   style={{
                     alignSelf: 'flex-start',
                     flexDirection: 'row',

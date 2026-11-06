@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 
 import { authService } from '@/services/auth.service';
-import { TOKEN_STORAGE_KEY } from '@/services/api';
+import { TOKEN_STORAGE_KEY, setOnUnauthorizedCallback } from '@/services/api';
 import {
   UserLogin,
   UserRegister,
@@ -12,6 +12,7 @@ import {
   UserUpdateProfile,
   TokenResponse,
 } from '@/types/auth';
+import { ToastAndroid, Platform } from 'react-native';
 
 interface AuthContextType {
   user: UserResponse | null;
@@ -21,6 +22,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (credentials: UserLogin) => Promise<TokenResponse>;
   register: (payload: UserRegister) => Promise<TokenResponse>;
+  deleteAccount: (payload: { password: string }) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (payload: UserUpdateProfile) => Promise<UserResponse>;
   refetchUser: () => Promise<any>;
@@ -55,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const {
     data: user = null,
     isLoading: isUserLoading,
+    isError: isUserError,
     refetch: refetchUser,
   } = useQuery({
     queryKey: ['auth', 'me', token],
@@ -66,6 +69,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     staleTime: 1000 * 60 * 5, // Cache valid selama 5 menit
     retry: 1,
   });
+
+  // Jika token di storage tidak valid (misal sesi habis saat baru buka aplikasi), bersihkan token
+  useEffect(() => {
+    if (isUserError && token) {
+      AsyncStorage.removeItem(TOKEN_STORAGE_KEY).catch(() => {});
+      setToken(null);
+    }
+  }, [isUserError, token]);
+
+  // Daftarkan listener 401 Unauthorized dari apiClient
+  useEffect(() => {
+    setOnUnauthorizedCallback(() => {
+      setToken(null);
+      queryClient.removeQueries({ queryKey: ['auth'] });
+    });
+
+    return () => {
+      setOnUnauthorizedCallback(null);
+    };
+  }, [queryClient]);
 
   // 3. Mutasi Login
   const loginMutation = useMutation({
@@ -109,6 +132,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // 7. Hapus akun pengguna
+  const deleteAccountMutation = useMutation({
+    mutationFn: (payload: { password: string }) => authService.deleteAccount(payload),
+    onSuccess: async () => {
+      await logout();
+      if (Platform.OS === 'android') {
+        ToastAndroid.show('Akun berhasil dihapus.', ToastAndroid.SHORT);
+      }
+    },
+  });
+
   const isAuthenticating = loginMutation.isPending || registerMutation.isPending || updateProfileMutation.isPending;
   const isLoading = isInitializing || (!!token && isUserLoading);
   const isAuthenticated = !!token && !!user;
@@ -123,6 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login: loginMutation.mutateAsync,
       register: registerMutation.mutateAsync,
       logout,
+      deleteAccount: deleteAccountMutation.mutateAsync,
       updateProfile: updateProfileMutation.mutateAsync,
       refetchUser,
     }),

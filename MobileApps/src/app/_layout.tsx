@@ -2,7 +2,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 import { useEffect, useState } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { 
   useFonts, 
   Nunito_400Regular, 
@@ -15,8 +15,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import "../global.css";
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { AuthProvider } from '@/context/AuthContext';
-import { TOKEN_STORAGE_KEY } from '@/services/api';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,6 +28,74 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function RootNavigation({ fontsLoaded }: { fontsLoaded: boolean }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState<boolean | null>(null);
+
+  // Periksa status onboarding sekali di awal
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const done = await AsyncStorage.getItem('onboarding_done');
+        setHasCompletedOnboarding(done === 'true');
+      } catch {
+        setHasCompletedOnboarding(false);
+      }
+    };
+    checkOnboarding();
+  }, []);
+
+  // Auth Guard Reaktif untuk melindungi seluruh rute aplikasi
+  useEffect(() => {
+    // Tunggu sampai font selesai dimuat, status onboarding terbaca, dan sesi autentikasi siap
+    if (!fontsLoaded || isLoading || hasCompletedOnboarding === null) return;
+
+    // Sembunyikan native splash screen begitu status rute telah terverifikasi
+    SplashScreen.hideAsync().catch(() => {});
+
+    const firstSegment = segments[0] as string | undefined;
+    const isAuthGroup = firstSegment === 'login' || firstSegment === 'Register' || firstSegment === 'onboarding';
+
+    if (!isAuthenticated) {
+      // 1. Pengguna BELUM LOGIN
+      if (!isAuthGroup) {
+        // Mencoba mengakses rute terproteksi (seperti (tabs), ai-input, ProfilePage)
+        if (hasCompletedOnboarding) {
+          router.replace('/login');
+        } else {
+          router.replace('/onboarding');
+        }
+      }
+    } else {
+      // 2. Pengguna SUDAH LOGIN
+      if (isAuthGroup) {
+        // Mencegah pengguna yang sudah login kembali ke halaman login, register, atau onboarding
+        router.replace('/(tabs)');
+      }
+    }
+  }, [isAuthenticated, isLoading, fontsLoaded, hasCompletedOnboarding, segments, router]);
+
+  // Jika font belum siap atau status login masih diperiksa, tahan layar dengan Splash Overlay
+  if (!fontsLoaded || isLoading || hasCompletedOnboarding === null) {
+    return <AnimatedSplashOverlay />;
+  }
+
+  return (
+    <>
+      <AnimatedSplashOverlay />
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
+        <Stack.Screen name="login" options={{ animation: 'fade' }} />
+        <Stack.Screen name="Register" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="ai-input" options={{ presentation: 'transparentModal', animation: 'fade' }} />
+      </Stack>
+    </>
+  );
+}
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -44,46 +111,11 @@ export default function RootLayout() {
     if (error) throw error;
   }, [error]);
 
-  useEffect(() => {
-    if (!loaded && !error) return;
-
-    // Cek status sesi login dan onboarding saat aplikasi terbuka
-    const checkInitialRoute = async () => {
-      await SplashScreen.hideAsync();
-      const token = await AsyncStorage.getItem(TOKEN_STORAGE_KEY);
-      const done = await AsyncStorage.getItem('onboarding_done');
-
-      if (token) {
-        // Pengguna sudah login -> langsung arahkan ke Dashboard
-        router.replace('/(tabs)');
-      } else if (done === 'true') {
-        // Sudah onboarding -> ke halaman Login
-        router.replace('/login');
-      } else {
-        // Pertama kali buka aplikasi -> ke Onboarding
-        router.replace('/onboarding');
-      }
-    };
-
-    checkInitialRoute();
-  }, [loaded, error]);
-
-  if (!loaded && !error) {
-    return null;
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-          <AnimatedSplashOverlay />
-          <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-            <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
-            <Stack.Screen name="login" options={{ animation: 'fade' }} />
-            <Stack.Screen name="Register" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="ai-input" options={{ presentation: 'transparentModal', animation: 'fade' }} />
-          </Stack>
+          <RootNavigation fontsLoaded={loaded} />
         </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>

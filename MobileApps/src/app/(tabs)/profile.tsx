@@ -9,9 +9,11 @@ import { useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
   const [profileData, setProfileData] = useState({
@@ -19,6 +21,35 @@ export default function ProfileScreen() {
     phone: "0812 •••• 8899",
     avatarUri: "https://i.pravatar.cc/150?img=11",
   });
+
+  const displayName = user?.name ? user.name.toUpperCase() : profileData.name;
+  const displayPhone = user?.phone || profileData.phone;
+  const displayAvatar = user?.avatar_url || profileData.avatarUri;
+
+  const handleLogout = async () => {
+    Alert.alert(
+      "Konfirmasi Keluar",
+      "Apakah Anda yakin ingin keluar dari aplikasi?",
+      [
+        {
+          text: "Batal",
+          style: "cancel",
+        },
+        {
+          text: "Keluar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("user_account_settings");
+              await logout();
+            } catch (error) {
+              console.error("Gagal keluar:", error);
+            }
+          },
+        },
+      ]
+    );
+  }
 
   useFocusEffect(
     useCallback(() => {
@@ -111,7 +142,7 @@ export default function ProfileScreen() {
             <View className="relative">
               <View className="w-[72px] h-[72px] rounded-full border-2 border-white overflow-hidden mr-4 bg-[#F2F2F7]">
                 <Image
-                  source={{ uri: profileData.avatarUri }}
+                  source={{ uri: displayAvatar }}
                   className="w-full h-full"
                 />
               </View>
@@ -124,10 +155,10 @@ export default function ProfileScreen() {
 
             <View className="flex-1">
               <Text className="text-white text-[19px] font-['Nunito_800ExtraBold'] tracking-wide">
-                {profileData.name}
+                {displayName}
               </Text>
               <Text className="text-white/80 text-[14px] font-['Nunito_600SemiBold'] mt-0.5">
-                {profileData.phone}
+                {displayPhone}
               </Text>
             </View>
           </View>
@@ -244,6 +275,7 @@ export default function ProfileScreen() {
               label="Keluar Aplikasi"
               color="#FF3B30"
               isDestructive={true}
+              onPress={handleLogout}
             />
           </View>
         </View>

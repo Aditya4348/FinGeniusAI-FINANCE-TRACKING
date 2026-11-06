@@ -12,15 +12,116 @@ import { useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/AuthContext';
+import { isAxiosError } from 'axios';
+
+interface InputFieldProps {
+  value: string;
+  onChangeText: (text: string) => void;
+  error?: string;
+  icon: keyof typeof Feather.glyphMap | string;
+  placeholder: string;
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad' | 'number-pad' | 'decimal-pad';
+  secureEntry?: boolean;
+  toggleVisible?: () => void;
+  isVisible?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  maxLength?: number;
+}
+
+function InputField({
+  value,
+  onChangeText,
+  error,
+  icon,
+  placeholder,
+  keyboardType = 'default',
+  secureEntry = false,
+  toggleVisible,
+  isVisible,
+  autoCapitalize = 'none',
+  maxLength,
+}: InputFieldProps) {
+  const hasError = !!error;
+  const hasValue = !!value;
+
+  return (
+    <View style={{ marginBottom: hasError ? 6 : 14 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: hasError ? '#FEF2F2' : '#E2EAF3',
+          borderRadius: 50,
+          paddingHorizontal: 18,
+          height: 54,
+          borderWidth: hasError ? 1.5 : 0,
+          borderColor: hasError ? '#FCA5A5' : 'transparent',
+        }}
+      >
+        <Feather
+          name={icon as any}
+          size={18}
+          color={hasError ? '#EF4444' : hasValue ? '#0284C7' : '#94A3B8'}
+          style={{ marginRight: 10 }}
+        />
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor="#94A3B8"
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          secureTextEntry={secureEntry && !isVisible}
+          maxLength={maxLength}
+          style={{
+            flex: 1,
+            fontSize: 15,
+            fontFamily: 'Nunito_600SemiBold',
+            color: '#0F172A',
+            padding: 0,
+          }}
+        />
+        {toggleVisible && (
+          <Pressable onPress={toggleVisible} hitSlop={12}>
+            <Feather
+              name={isVisible ? 'eye-off' : 'eye'}
+              size={18}
+              color="#94A3B8"
+            />
+          </Pressable>
+        )}
+      </View>
+      {hasError && (
+        <Text
+          style={{
+            color: '#EF4444',
+            fontSize: 11,
+            fontFamily: 'Nunito_600SemiBold',
+            marginTop: 4,
+            marginLeft: 18,
+            marginBottom: 8,
+          }}
+        >
+          {error}
+        </Text>
+      )}
+    </View>
+  );
+}
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { register } = useAuth();
   const insets = useSafeAreaInsets();
 
+
   const [form, setForm] = useState({
+    name: '',
     phone: '',
     username: '',
     email: '',
+    job: '',
     password: '',
     confirmPassword: '',
   });
@@ -29,122 +130,73 @@ export default function RegisterScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const set = (field: string) => (val: string) =>
+  const set = (field: keyof typeof form) => (val: string) =>
     setForm((prev) => ({ ...prev, [field]: val }));
 
   const validate = () => {
     const e: Record<string, string> = {};
-    if (!form.phone) e.phone = 'Nomor telepon wajib diisi.';
-    else if (!/^\d{9,15}$/.test(form.phone.replace(/\s/g, '')))
-      e.phone = 'Nomor telepon tidak valid.';
-    if (!form.username) e.username = 'Username wajib diisi.';
-    if (!form.email) e.email = 'Email wajib diisi.';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Format email tidak valid.';
+    const name = form.name.trim();
+    const username = form.username.trim().toLowerCase();
+    const email = form.email.trim();
+
+    if (name.length < 2 || name.length > 100)
+      e.name = 'Nama harus terdiri dari 2 sampai 100 karakter.';
+    if (username.length < 3 || username.length > 50)
+      e.username = 'Username harus terdiri dari 3 sampai 50 karakter.';
+    else if (!/^[a-z0-9_.-]+$/.test(username))
+      e.username = 'Username hanya boleh berisi huruf, angka, titik, strip, atau underscore.';
+    if (!email) e.email = 'Email wajib diisi.';
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Format email tidak valid.';
     if (!form.password) e.password = 'Kata sandi wajib diisi.';
-    else if (form.password.length < 8) e.password = 'Kata sandi minimal 8 karakter.';
+    else if (form.password.length < 8 || form.password.length > 100)
+      e.password = 'Kata sandi harus terdiri dari 8 sampai 100 karakter.';
     if (!form.confirmPassword) e.confirmPassword = 'Konfirmasi kata sandi wajib diisi.';
     else if (form.password !== form.confirmPassword)
       e.confirmPassword = 'Kata sandi tidak cocok.';
     return e;
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const e = validate();
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
     setIsLoading(true);
-    // Simulasi proses daftar
-    setTimeout(() => {
+    try {
+      await register({
+        name: form.name.trim(),
+        username: form.username.trim().toLowerCase(),
+        email: form.email.trim(),
+        password: form.password,
+        phone: form.phone.trim() || null,
+        job: form.job.trim() || null,
+      });
+    } catch (error: unknown) {
+      console.error('Gagal mendaftar:', error);
+      if (isAxiosError(error)) {
+        const detail: unknown = error.response?.data?.detail;
+        if (typeof detail === 'string') {
+          setErrors({ general: detail });
+        } else if (Array.isArray(detail)) {
+          setErrors({
+            general: detail
+              .map((item) =>
+                item && typeof item === 'object' && 'msg' in item
+                  ? String(item.msg)
+                  : null,
+              )
+              .filter((message): message is string => message !== null)
+              .join('\n') || 'Data pendaftaran tidak valid.',
+          });
+        } else {
+          setErrors({ general: 'Terjadi kesalahan saat mendaftar.' });
+        }
+      } else {
+        setErrors({ general: 'Terjadi kesalahan saat mendaftar.' });
+      }
+    } finally {
       setIsLoading(false);
-      router.replace('/login');
-    }, 1500);
-  };
-
-  const InputField = ({
-    field,
-    icon,
-    placeholder,
-    keyboardType = 'default',
-    secureEntry = false,
-    toggleVisible,
-    isVisible,
-    autoCapitalize = 'none',
-  }: {
-    field: keyof typeof form;
-    icon: string;
-    placeholder: string;
-    keyboardType?: any;
-    secureEntry?: boolean;
-    toggleVisible?: () => void;
-    isVisible?: boolean;
-    autoCapitalize?: any;
-  }) => {
-    const hasError = !!errors[field];
-    const hasValue = !!form[field];
-
-    return (
-      <View style={{ marginBottom: hasError ? 6 : 14 }}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: hasError ? '#FEF2F2' : '#E2EAF3',
-            borderRadius: 50,
-            paddingHorizontal: 18,
-            height: 54,
-            borderWidth: hasError ? 1.5 : 0,
-            borderColor: hasError ? '#FCA5A5' : 'transparent',
-          }}
-        >
-          <Feather
-            name={icon as any}
-            size={18}
-            color={hasError ? '#EF4444' : hasValue ? '#0284C7' : '#94A3B8'}
-            style={{ marginRight: 10 }}
-          />
-          <TextInput
-            value={form[field]}
-            onChangeText={set(field)}
-            placeholder={placeholder}
-            placeholderTextColor="#94A3B8"
-            keyboardType={keyboardType}
-            autoCapitalize={autoCapitalize}
-            secureTextEntry={secureEntry && !isVisible}
-            style={{
-              flex: 1,
-              fontSize: 15,
-              fontFamily: 'Nunito_600SemiBold',
-              color: '#0F172A',
-              padding: 0,
-            }}
-          />
-          {toggleVisible && (
-            <Pressable onPress={toggleVisible} hitSlop={12}>
-              <Feather
-                name={isVisible ? 'eye-off' : 'eye'}
-                size={18}
-                color="#94A3B8"
-              />
-            </Pressable>
-          )}
-        </View>
-        {hasError && (
-          <Text
-            style={{
-              color: '#EF4444',
-              fontSize: 11,
-              fontFamily: 'Nunito_600SemiBold',
-              marginTop: 4,
-              marginLeft: 18,
-              marginBottom: 8,
-            }}
-          >
-            {errors[field]}
-          </Text>
-        )}
-      </View>
-    );
+    }
   };
 
   return (
@@ -333,39 +385,91 @@ export default function RegisterScreen() {
 
             {/* Input Fields */}
             <InputField
-              field="phone"
-              icon="phone"
-              placeholder="Nomor Telepon"
-              keyboardType="phone-pad"
-            />
-            <InputField
-              field="username"
+              value={form.name}
+              onChangeText={set('name')}
+              error={errors.name}
               icon="user"
-              placeholder="Username"
+              placeholder="Nama Lengkap"
               autoCapitalize="words"
+              maxLength={100}
             />
             <InputField
-              field="email"
+              value={form.username}
+              onChangeText={set('username')}
+              error={errors.username}
+              icon="at-sign"
+              placeholder="Username"
+              maxLength={50}
+            />
+            <InputField
+              value={form.email}
+              onChangeText={set('email')}
+              error={errors.email}
               icon="mail"
               placeholder="Email"
               keyboardType="email-address"
             />
             <InputField
-              field="password"
+              value={form.phone}
+              onChangeText={set('phone')}
+              error={errors.phone}
+              icon="phone"
+              placeholder="Nomor Telepon (opsional)"
+              keyboardType="phone-pad"
+            />
+            <InputField
+              value={form.job}
+              onChangeText={set('job')}
+              error={errors.job}
+              icon="briefcase"
+              placeholder="Pekerjaan (opsional)"
+              autoCapitalize="words"
+            />
+            <InputField
+              value={form.password}
+              onChangeText={set('password')}
+              error={errors.password}
               icon="lock"
               placeholder="Kata Sandi"
               secureEntry={true}
               isVisible={isPasswordVisible}
               toggleVisible={() => setIsPasswordVisible(!isPasswordVisible)}
+              maxLength={100}
             />
             <InputField
-              field="confirmPassword"
+              value={form.confirmPassword}
+              onChangeText={set('confirmPassword')}
+              error={errors.confirmPassword}
               icon="check-circle"
               placeholder="Konfirmasi Kata Sandi"
               secureEntry={true}
               isVisible={isConfirmVisible}
               toggleVisible={() => setIsConfirmVisible(!isConfirmVisible)}
+              maxLength={100}
             />
+            <Text
+              style={{
+                color: '#64748B',
+                fontSize: 12,
+                fontFamily: 'Nunito_600SemiBold',
+                marginBottom: 8,
+              }}
+            >
+              Tanggal gajian awal diatur ke tanggal 25.
+            </Text>
+            {!!errors.general && (
+              <Text
+                style={{
+                  color: '#EF4444',
+                  fontSize: 12,
+                  fontFamily: 'Nunito_600SemiBold',
+                  marginBottom: 12,
+                  textAlign: 'center',
+                }}
+              >
+                {errors.general}
+              </Text>
+            )}
 
             {/* Tombol Daftar */}
             <Pressable

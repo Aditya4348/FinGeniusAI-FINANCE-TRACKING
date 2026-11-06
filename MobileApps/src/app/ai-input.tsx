@@ -871,9 +871,10 @@ const styles = StyleSheet.create({
   scannerWrapper: {
     paddingHorizontal: 20,
     paddingBottom: 10,
+
   },
   cameraBox: {
-    height: 320,
+    height: 420,
     backgroundColor: '#0F172A',
     borderRadius: 20,
     overflow: 'hidden',
@@ -910,7 +911,7 @@ const styles = StyleSheet.create({
   viewfinder: {
     alignSelf: 'center',
     width: 210,
-    height: 180,
+    height: 200,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(56, 189, 248, 0.3)',

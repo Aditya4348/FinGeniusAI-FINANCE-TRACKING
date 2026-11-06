@@ -3,6 +3,7 @@ from fastapi import APIRouter, status
 from app.api.deps import DbSession, CurrentUser
 from app.core.security import create_access_token
 from app.schemas.user import (
+    DeleteUserRequest,
     UserRegister,
     UserLogin,
     TokenResponse,
@@ -97,3 +98,18 @@ def change_password(
     """
     AuthService.change_password(db, current_user, payload)
     return {"message": "Kata sandi berhasil diperbarui"}
+
+@router.post(
+    "/delete-account",
+    summary="Hapus akun pengguna",
+)
+def delete_account(
+    payload: DeleteUserRequest,
+    current_user: CurrentUser,
+    db: DbSession,
+):
+    """
+    Menghapus akun pengguna yang sedang login setelah memverifikasi kata sandi.
+    """
+    AuthService.delete_account(db, current_user, payload)
+    return {"message": "Akun berhasil dihapus"}
